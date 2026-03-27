@@ -86,7 +86,7 @@ export function CustomTabBar({
         styles.container,
         {
           backgroundColor: colors.tabBarBackground,
-          paddingBottom: 15,
+          paddingBottom: 7,
         },
         Platform.select({
           ios: {

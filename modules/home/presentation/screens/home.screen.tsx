@@ -1,15 +1,22 @@
+import { NotificationButton } from '@/shared/presentation/components/notification-button';
+import { ThemeToggle } from '@/shared/presentation/components/theme-toggle';
+import { onThemeProfilerRender } from '@/shared/presentation/devtools/theme-profiler';
+import { useAuth } from '@/shared/presentation/hooks/auth/use-auth';
+import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
 import React, { Profiler } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { NotificationButton } from '@/shared/presentation/components/notification-button';
-import { ThemeToggle } from '@/shared/presentation/components/theme-toggle';
-import { onThemeProfilerRender } from '@/shared/presentation/devtools/theme-profiler';
-import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
-
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { isAuthenticated, user } = useAuth();
+
+  const displayName = isAuthenticated
+    ? (user?.displayName ?? user?.email?.split('@')[0] ?? 'Usuario')
+    : 'Invitado';
+
+  const initial = displayName.charAt(0).toUpperCase();
 
   const content = (
     <ScrollView
@@ -30,20 +37,20 @@ export default function HomeScreen() {
             ]}
           >
             <Text style={[styles.avatarEmoji, { color: colors.primary }]}>
-              C
+              {initial}
             </Text>
           </View>
           <View>
             <Text style={[styles.greeting, { color: colors.text }]}>
-              Hola, Carlos!
+              Hola, {displayName}!
             </Text>
             <Text style={[styles.subGreeting, { color: colors.gradientEnd }]}>
-              Ver perfil
+              {isAuthenticated ? 'Ver perfil' : 'Modo invitado'}
             </Text>
           </View>
         </View>
         <View style={styles.headerRight}>
-          <NotificationButton badgeCount={2} />
+          <NotificationButton badgeCount={isAuthenticated ? 2 : 0} />
           <ThemeToggle />
         </View>
       </View>
@@ -127,7 +134,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 20,
   },
-  // --- Header ---
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -163,7 +169,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '400',
   },
-  // --- Sections ---
   sectionTitle: {
     fontSize: 28,
     fontWeight: '700',
@@ -177,7 +182,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
   },
-  // --- Supermercado Card ---
   supermarketCard: {
     borderRadius: 16,
     padding: 20,
@@ -191,7 +195,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '400',
   },
-  // --- Deudas Cards ---
   debtRow: {
     flexDirection: 'row',
     gap: 12,

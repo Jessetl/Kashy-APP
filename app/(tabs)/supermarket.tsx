@@ -1,1 +1,1 @@
-export { default } from '../pages/supermarket/presentation/screens/supermarket.screen';
+export { default } from '@/modules/supermarket/presentation/screens/supermarket.screen';

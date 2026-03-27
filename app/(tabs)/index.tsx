@@ -1,1 +1,1 @@
-export { default } from '../pages/home/presentation/screens/home.screen';
+export { default } from '@/modules/home/presentation/screens/home.screen';

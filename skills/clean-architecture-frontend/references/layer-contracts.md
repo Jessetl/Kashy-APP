@@ -2,6 +2,8 @@
 
 Guía detallada con ejemplos de código para cada capa de Clean Architecture. Lee esta referencia cuando necesites implementar un artefacto específico (entity, DTO, use case, etc.) y necesites recordar el contrato exacto.
 
+**Regla fundamental**: todo el código de features vive en `modules/`, NUNCA en `app/`. Los archivos de `app/` son thin wrappers de 1-3 líneas que re-exportan screens desde `modules/`.
+
 ## Tabla de Contenidos
 
 1. [Domain — Entities](#domain-layer--entities)
@@ -15,6 +17,7 @@ Guía detallada con ejemplos de código para cada capa de Clean Architecture. Le
 9. [Infrastructure — Datasources](#infrastructure-layer--datasources)
 10. [Presentation — Hooks](#presentation-layer--hooks)
 11. [Presentation — Screens](#presentation-layer--screens)
+12. [app/ — Thin Wrappers (Expo Router)](#app--thin-wrappers-expo-router)
 
 ---
 
@@ -23,7 +26,7 @@ Guía detallada con ejemplos de código para cada capa de Clean Architecture. Le
 Las entidades son objetos puros de TypeScript que representan conceptos del negocio. No tienen dependencias externas, no conocen React, Expo, ni ninguna librería. Son la fuente de verdad del dominio.
 
 ```typescript
-// app/pages/auth/domain/entities/user.entity.ts
+// modules/auth/domain/entities/user.entity.ts
 
 export interface User {
   readonly id: string;
@@ -60,7 +63,7 @@ export function canManageTeam(user: User): boolean {
 Encapsulan un valor con validación y lógica propia. La diferencia con una entidad es que no tienen identidad — dos emails iguales son el mismo value object.
 
 ```typescript
-// app/pages/auth/domain/value-objects/email.vo.ts
+// modules/auth/domain/value-objects/email.vo.ts
 
 export class Email {
   private constructor(public readonly value: string) {}
@@ -97,7 +100,7 @@ export class Email {
 Errores tipados del dominio. Permiten que las capas superiores identifiquen qué salió mal sin acoplarse a detalles de implementación.
 
 ```typescript
-// app/pages/auth/domain/errors/auth.errors.ts
+// modules/auth/domain/errors/auth.errors.ts
 
 export class InvalidCredentialsError extends Error {
   readonly code = 'INVALID_CREDENTIALS' as const;
@@ -125,7 +128,7 @@ export type AuthError = InvalidCredentialsError | SessionExpiredError;
 Los ports definen el **contrato** que la capa de Infrastructure debe cumplir. Application nunca sabe quién implementa el contrato — solo sabe que existe.
 
 ```typescript
-// app/pages/auth/application/ports/auth.repository.ts
+// modules/auth/application/ports/auth.repository.ts
 
 import type { User } from '../../domain/entities/user.entity';
 import type { LoginRequestDto } from '../dtos/login-request.dto';
@@ -144,7 +147,7 @@ export interface AuthRepository {
 
 - Solo `interface`, nunca `class`.
 - Vive en `application/ports/`, no en `domain/` ni en `infrastructure/`.
-- Los métodos reciben y retornan DTOs o Entities — nunca tipos de Axios, AsyncStorage, o cualquier librería.
+- Los métodos reciben y retornan DTOs o Entities — nunca tipos de fetch, MMKV, o cualquier librería.
 - Nombra la interfaz sin sufijo `Interface` — usa el nombre conceptual: `AuthRepository`, no `IAuthRepository` ni `AuthRepositoryInterface`.
 
 ---
@@ -154,7 +157,7 @@ export interface AuthRepository {
 Data Transfer Objects: objetos planos que definen la forma de los datos que cruzan fronteras entre capas. Cada DTO tiene su schema Zod para validación en runtime.
 
 ```typescript
-// app/pages/auth/application/dtos/login-request.dto.ts
+// modules/auth/application/dtos/login-request.dto.ts
 
 import { z } from 'zod';
 
@@ -167,7 +170,7 @@ export type LoginRequestDto = z.infer<typeof LoginRequestSchema>;
 ```
 
 ```typescript
-// app/pages/auth/application/dtos/login-response.dto.ts
+// modules/auth/application/dtos/login-response.dto.ts
 
 import { z } from 'zod';
 
@@ -202,7 +205,7 @@ export type LoginResponseDto = z.infer<typeof LoginResponseSchema>;
 Transforman datos entre DTOs y Entities. La razón de existir de los mappers es que la forma de los datos en la API (DTO) raramente coincide exactamente con la forma que el dominio necesita (Entity).
 
 ```typescript
-// app/pages/auth/application/mappers/user.mapper.ts
+// modules/auth/application/mappers/user.mapper.ts
 
 import type { User } from '../../domain/entities/user.entity';
 import type { LoginResponseDto } from '../dtos/login-response.dto';
@@ -235,7 +238,7 @@ export const UserMapper = {
 El use case es el **orquestador del flujo**. Recibe datos validados, coordina entre repositorios y entidades, y retorna el resultado. Cada use case representa una acción concreta del usuario.
 
 ```typescript
-// app/pages/auth/application/use-cases/login.use-case.ts
+// modules/auth/application/use-cases/login.use-case.ts
 
 import type { AuthRepository } from '../ports/auth.repository';
 import type { LoginRequestDto } from '../dtos/login-request.dto';
@@ -264,7 +267,7 @@ export class LoginUseCase {
 - Una clase con un solo método público: `execute()`.
 - Recibe dependencias (repositorios) por constructor — Dependency Injection.
 - Sin dependencias de React, hooks, ni componentes. Un use case es ejecutable desde cualquier contexto.
-- Cada use case hace UNA cosa. Si `execute()` tiene más de 20-30 líneas, probablemente necesitas descomponer en use cases más pequeños o extraer lógica a domain.
+- Cada use case hace UNA cosa. Si `execute()` tiene más de 20-30 líneas, probablemente necesites descomponer.
 - Nomenclatura: `[Verbo][Sustantivo]UseCase` → `LoginUseCase`, `GetMatchesUseCase`, `UpdateProfileUseCase`.
 
 ---
@@ -274,13 +277,12 @@ export class LoginUseCase {
 Implementa el contrato definido en `application/ports/`. Aquí es donde vive el código "sucio" — HTTP calls, storage, manejo de tokens.
 
 ```typescript
-// app/pages/auth/infrastructure/repositories/auth.repository.impl.ts
+// modules/auth/infrastructure/repositories/auth.repository.impl.ts
 
 import type { AuthRepository } from '../../application/ports/auth.repository';
 import type { LoginRequestDto } from '../../application/dtos/login-request.dto';
 import type { LoginResponseDto } from '../../application/dtos/login-response.dto';
 import { LoginResponseSchema } from '../../application/dtos/login-response.dto';
-import type { User } from '../../domain/entities/user.entity';
 import type { AuthApiDatasource } from '../datasources/auth-api.datasource';
 import type { AuthLocalDatasource } from '../datasources/auth-local.datasource';
 
@@ -309,9 +311,7 @@ export class AuthRepositoryImpl implements AuthRepository {
     await this.local.clearTokens();
   }
 
-  async getCurrentUser(): Promise<User | null> {
-    const isAuth = await this.isAuthenticated();
-    if (!isAuth) return null;
+  async getCurrentUser(): Promise<null> {
     return null;
   }
 
@@ -335,7 +335,7 @@ export class AuthRepositoryImpl implements AuthRepository {
 **Reglas de implementations:**
 
 - Sufijo `Impl`: `AuthRepositoryImpl implements AuthRepository`.
-- Recibe datasources por constructor — nunca instancia Axios ni AsyncStorage directamente.
+- Recibe datasources por constructor — nunca instancia fetch ni MMKV directamente.
 - Valida toda respuesta externa con Zod antes de pasarla hacia arriba.
 - Aquí sí puedes usar try/catch para errores de red y transformarlos a errores de dominio.
 
@@ -343,23 +343,29 @@ export class AuthRepositoryImpl implements AuthRepository {
 
 ## Infrastructure Layer — Datasources
 
-Los datasources son wrappers de bajo nivel sobre herramientas específicas (Axios, AsyncStorage, MMKV). Cada datasource habla con UNA fuente de datos.
+Los datasources son wrappers de bajo nivel sobre herramientas específicas (fetch, MMKV). Cada datasource habla con UNA fuente de datos.
 
 ```typescript
-// app/pages/auth/infrastructure/datasources/auth-api.datasource.ts
+// modules/auth/infrastructure/datasources/auth-api.datasource.ts
 
 import { apiClient } from '@/shared/infrastructure/api/api-client';
 import type { LoginRequestDto } from '../../application/dtos/login-request.dto';
 
 export class AuthApiDatasource {
   async login(credentials: LoginRequestDto) {
-    const { data } = await apiClient.post('/auth/login', credentials);
+    const { data } = await apiClient('/auth/login', {
+      method: 'POST',
+      body: credentials,
+      skipAuth: true,
+    });
     return data;
   }
 
   async refreshToken(token: string) {
-    const { data } = await apiClient.post('/auth/refresh', {
-      refreshToken: token,
+    const { data } = await apiClient('/auth/refresh', {
+      method: 'POST',
+      body: { refreshToken: token },
+      skipAuth: true,
     });
     return data;
   }
@@ -367,9 +373,9 @@ export class AuthApiDatasource {
 ```
 
 ```typescript
-// app/pages/auth/infrastructure/datasources/auth-local.datasource.ts
+// modules/auth/infrastructure/datasources/auth-local.datasource.ts
 
-import { secureStorage } from '@/shared/infrastructure/storage/secure-storage';
+import { appStorage } from '@/shared/infrastructure/storage/app-storage';
 
 interface StoredTokens {
   accessToken: string;
@@ -380,16 +386,16 @@ export class AuthLocalDatasource {
   private readonly TOKENS_KEY = 'auth_tokens';
 
   async saveTokens(tokens: StoredTokens): Promise<void> {
-    await secureStorage.set(this.TOKENS_KEY, JSON.stringify(tokens));
+    appStorage.setString(this.TOKENS_KEY, JSON.stringify(tokens));
   }
 
   async getTokens(): Promise<StoredTokens | null> {
-    const raw = await secureStorage.get(this.TOKENS_KEY);
+    const raw = appStorage.getString(this.TOKENS_KEY);
     return raw ? JSON.parse(raw) : null;
   }
 
   async clearTokens(): Promise<void> {
-    await secureStorage.remove(this.TOKENS_KEY);
+    appStorage.remove(this.TOKENS_KEY);
   }
 }
 ```
@@ -401,7 +407,8 @@ export class AuthLocalDatasource {
 Los hooks son el **puente** entre la arquitectura y React. Instancian las dependencias, crean los use cases, y exponen la interfaz que la UI consume.
 
 ```typescript
-// app/pages/auth/presentation/hooks/use-login.ts
+// modules/auth/presentation/hooks/use-login.ts
+// (o shared/presentation/hooks/auth/use-login.ts si es compartido globalmente)
 
 import { useMutation } from '@tanstack/react-query';
 import type { LoginRequestDto } from '../../application/dtos/login-request.dto';
@@ -438,10 +445,10 @@ export function useLogin() {
 
 ## Presentation Layer — Screens
 
-Las screens son el punto de entrada de Expo Router. Conectan hooks con componentes visuales. El **código visual** de la screen es responsabilidad del skill `rnr-ui-designer`; este skill solo decide la estructura.
+Las screens son componentes que conectan hooks con UI. El **código visual** de la screen es responsabilidad del skill `rnr-ui-designer`; este skill solo decide la estructura.
 
 ```typescript
-// app/pages/auth/presentation/screens/login.screen.tsx
+// modules/auth/presentation/screens/login.screen.tsx
 
 import { useLogin } from '../hooks/use-login';
 import { LoginForm } from '../components/login-form';
@@ -464,4 +471,34 @@ export default function LoginScreen() {
 - Máximo 30-40 líneas. Si es más larga, extrae componentes.
 - No lógica de negocio — solo conecta hooks con componentes.
 - El componente visual (`LoginForm`) es responsabilidad del skill `rnr-ui-designer`.
-- La screen vive en la page pero se registra en Expo Router vía `app/` (ver patterns.md).
+- La screen vive en `modules/` y se registra en Expo Router via thin wrapper en `app/`.
+
+---
+
+## app/ — Thin Wrappers (Expo Router)
+
+Los archivos en `app/` son **exclusivamente** para routing. Cada uno es un re-export de 1 línea que conecta una ruta de Expo Router con una screen en `modules/`.
+
+```typescript
+// app/(tabs)/index.tsx
+export { default } from '@/modules/home/presentation/screens/home.screen';
+```
+
+```typescript
+// app/(tabs)/profile.tsx
+export { default } from '@/modules/profile/presentation/screens/profile.screen';
+```
+
+```typescript
+// app/(tabs)/supermarket.tsx
+export { default } from '@/modules/supermarket/presentation/screens/supermarket.screen';
+```
+
+```typescript
+// app/(tabs)/debts.tsx
+export { default } from '@/modules/debts/presentation/screens/debts.screen';
+```
+
+**Regla absoluta:** si necesitas importar un hook, un componente, o cualquier lógica dentro de `app/`, es señal de que ese código debe vivir en `modules/` o `shared/` en su lugar.
+
+La única excepción son los **layouts** (`_layout.tsx`) que necesitan configurar providers globales, tab bars, y wrappers de navegación — pero incluso estos deben importar componentes desde `shared/`, no definirlos inline.

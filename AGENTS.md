@@ -41,10 +41,12 @@ Backend: NestJS + PostgreSQL + Firebase Auth + RabbitMQ + FCM.
 ## Reglas Arquitectonicas
 
 - Dominio = TypeScript puro (cero imports de React, Expo ni librerias externas).
-- Pages autonomas, sin importaciones cruzadas. Comunicacion via hooks publicos o shared services.
+- Modulos autonomos en `modules/`, sin importaciones cruzadas. Comunicacion via hooks publicos o shared services.
 - Screens solo conectan hooks con componentes. Cero logica de negocio.
 - Use Cases reciben dependencias por constructor (DI). Dependen de interfaces (ports), no implementaciones.
-- Archivos de `app/` son rutas y contenedores; cada modulo vive en `app/pages/`.
+- **`app/` = SOLO rutas de Expo Router** (thin wrappers de 1-3 lineas que re-exportan desde `modules/`). NUNCA poner componentes, hooks, domain, ni logica de negocio dentro de `app/`.
+- **`modules/` = features con Clean Architecture** (domain, application, infrastructure, presentation). Cada modulo es autonomo.
+- **`shared/` = codigo compartido** (2+ modulos lo usan). Componentes reutilizables, hooks globales, API client, stores globales.
 - **Sistema de modos**: toda accion que persista datos verifica `isAuthenticated` antes de llamar al API. Si es guest, dispara modal de login contextual (ver ARCHITECTURE_MASTER seccion 3).
 - **Datos guest**: solo en estado local (React state / MMKV temporal). NUNCA se envian al backend.
 - **Monedas**: precios se ingresan en VES, deudas se almacenan en USD. Conversiones con tasa vigente de `exchange_rates`.

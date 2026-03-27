@@ -1,1 +1,1 @@
-export { default } from '../pages/debts/presentation/screens/debts.screen';
+export { default } from '@/modules/debts/presentation/screens/debts.screen';
