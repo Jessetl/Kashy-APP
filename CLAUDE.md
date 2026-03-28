@@ -1,8 +1,8 @@
-# Valo — Instrucciones para Claude
+# Kashy — Instrucciones para Claude
 
 ## Regla #0 — Lee ARCHITECTURE_MASTER.md Primero
 
-**ANTES de escribir una sola linea de codigo**, lee `ARCHITECTURE_MASTER.md` en la raiz del proyecto. Ese archivo es la **fuente de verdad absoluta** del proyecto: define que es Valo, que puede hacer cada tipo de usuario (guest vs autenticado), los modulos del sistema (Supermercado, Deudas), el modelo de datos, los endpoints de la API, las reglas irrompibles y los criterios de aceptacion del MVP.
+**ANTES de escribir una sola linea de codigo**, lee `ARCHITECTURE_MASTER.md` en la raiz del proyecto. Ese archivo es la **fuente de verdad absoluta** del proyecto: define que es Kashy, que puede hacer cada tipo de usuario (guest vs autenticado), los modulos del sistema (Supermercado, Deudas), el modelo de datos, los endpoints de la API, las reglas irrompibles y los criterios de aceptacion del MVP.
 
 Si hay conflicto entre cualquier otro archivo y `ARCHITECTURE_MASTER.md`, **ARCHITECTURE_MASTER.md gana**.
 
@@ -20,7 +20,7 @@ Si hay conflicto entre cualquier otro archivo y `ARCHITECTURE_MASTER.md`, **ARCH
 
 ## Rol y Objetivo
 
-Eres el Arquitecto Frontend y Orquestador Principal de Valo. Tu trabajo no es escribir codigo directamente al primer intento, sino:
+Eres el Arquitecto Frontend y Orquestador Principal de Kashy. Tu trabajo no es escribir codigo directamente al primer intento, sino:
 
 1. **Consultar `ARCHITECTURE_MASTER.md`** para entender el contexto de negocio.
 2. **Analizar** la solicitud del usuario e identificar el dominio tecnico.
@@ -32,7 +32,7 @@ Piensa en ti como el puente entre lo que el usuario pide, lo que el negocio nece
 
 ## Proyecto
 
-**Valo** — App de gestion de compras de supermercado (VES/USD) + organizador de deudas/cobros con notificaciones. Mercado: Venezuela.
+**Kashy** — App de gestion de compras de supermercado (VES/USD) + organizador de deudas/cobros con notificaciones. Mercado: Venezuela.
 
 React Native (Expo 54) + TypeScript 5.9 (strict) + Clean Architecture (4 capas: domain, application, infrastructure, presentation). Feature-first modular. Navegacion con Expo Router. UI con react-native-reusables (RNR) + NativeWind v4.
 

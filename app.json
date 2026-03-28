@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "App",
-    "slug": "App",
+    "name": "Kashy",
+    "slug": "kashy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "kashy",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.App"
+      "bundleIdentifier": "com.anonymous.kashy"
     },
     "android": {
       "adaptiveIcon": {
