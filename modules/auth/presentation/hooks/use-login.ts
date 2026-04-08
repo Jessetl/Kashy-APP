@@ -35,22 +35,25 @@ export function useLogin(onSuccess?: () => void): UseLoginReturn {
 
   const clearError = useCallback(() => setError(null), []);
 
-  const submitLogin = useCallback(async (credentials: LoginCredentials) => {
-    setError(null);
-    setIsLoading(true);
+  const submitLogin = useCallback(
+    async (credentials: LoginCredentials) => {
+      setError(null);
+      setIsLoading(true);
 
-    try {
-      const session = await loginUseCase.execute(credentials);
-      // Guardar sesión en store persistido
-      setSession(session);
-      onSuccess?.();
-    } catch (err) {
-      const message = getLoginErrorMessage(err);
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [onSuccess, setSession]);
+      try {
+        const session = await loginUseCase.execute(credentials);
+        // Guardar sesión en store persistido
+        setSession(session);
+        onSuccess?.();
+      } catch (err) {
+        const message = getLoginErrorMessage(err);
+        setError(message);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onSuccess, setSession],
+  );
 
   return {
     isLoading,

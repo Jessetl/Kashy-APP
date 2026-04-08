@@ -11,6 +11,7 @@ export class LoginUseCase {
     if (!credentials.password.trim()) {
       throw new Error('La contraseña es requerida');
     }
+
     return this.authPort.login(credentials);
   }
 }
