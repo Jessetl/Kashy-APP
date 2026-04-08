@@ -30,6 +30,8 @@ interface AuthState {
   isRestoringSession: boolean;
   /** Si el modal de login está visible */
   isLoginModalVisible: boolean;
+  /** Acción pendiente a ejecutar tras login exitoso (regla #6 ARCHITECTURE_MASTER) */
+  pendingAction: (() => void) | null;
 
   /** Guarda la sesión completa tras login exitoso */
   setSession: (session: AuthSession) => void;
@@ -43,9 +45,9 @@ interface AuthState {
   setHasHydrated: (value: boolean) => void;
   /** Hidrata la sesión persistida en SecureStore */
   hydrateSession: () => Promise<void>;
-  /** Abre el modal de login */
-  openLoginModal: () => void;
-  /** Cierra el modal de login */
+  /** Abre el modal de login, opcionalmente con una acción pendiente post-login */
+  openLoginModal: (pendingAction?: () => void) => void;
+  /** Cierra el modal de login y limpia la acción pendiente */
   closeLoginModal: () => void;
 }
 
@@ -57,6 +59,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   refreshToken: null,
   isRestoringSession: true,
   isLoginModalVisible: false,
+  pendingAction: null,
 
   setSession: (session: AuthSession) => {
     const persistedSession: PersistedAuthSession = {
@@ -66,15 +69,25 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       refreshToken: session.tokens.refreshToken,
     };
 
+    // Capturar la acción pendiente antes de limpiarla del state
+    const { pendingAction } = get();
+
     set({
       ...persistedSession,
       isLoginModalVisible: false,
+      pendingAction: null,
     });
 
     void secureStorage.setItem(
       AUTH_SESSION_KEY,
       JSON.stringify(persistedSession),
     );
+
+    // Ejecutar la acción pendiente DESPUÉS de que isAuthenticated = true
+    if (pendingAction) {
+      // Defer para que el state se haya propagado a los subscribers
+      queueMicrotask(pendingAction);
+    }
   },
 
   updateTokens: (tokens: AuthTokens) => {
@@ -140,8 +153,10 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     }
   },
 
-  openLoginModal: () => set({ isLoginModalVisible: true }),
-  closeLoginModal: () => set({ isLoginModalVisible: false }),
+  openLoginModal: (pendingAction?: () => void) =>
+    set({ isLoginModalVisible: true, pendingAction: pendingAction ?? null }),
+  closeLoginModal: () =>
+    set({ isLoginModalVisible: false, pendingAction: null }),
 }));
 
 // --- Selectores para uso fuera de React (api-client, interceptors) ---

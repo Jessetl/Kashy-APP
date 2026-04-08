@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.kashy"
+      "bundleIdentifier": "com.anonymous.kashy",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Kashy usa tu ubicacion para completar automaticamente tu ciudad y mejorar tu experiencia en la app."
+      }
     },
     "android": {
       "adaptiveIcon": {

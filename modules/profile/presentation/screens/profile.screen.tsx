@@ -52,7 +52,7 @@ export default function ProfileScreen() {
 
         {!isAuthenticated && (
           <Pressable
-            onPress={openLoginModal}
+            onPress={() => openLoginModal()}
             style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           >
             <Text

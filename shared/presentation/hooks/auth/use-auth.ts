@@ -1,4 +1,5 @@
 import type { AuthUser } from '@/shared/domain/auth/auth.types';
+import { useShoppingListStore } from '@/modules/supermarket/infrastructure/store/shopping-list.store';
 import { useAuthStore } from '@/shared/infrastructure/auth/auth.store';
 import { useCallback } from 'react';
 
@@ -11,8 +12,8 @@ interface UseAuthReturn {
   isRestoringSession: boolean;
   /** Cierra la sesión y limpia datos persistidos */
   logout: () => void;
-  /** Abre el modal de login */
-  openLoginModal: () => void;
+  /** Abre el modal de login, opcionalmente con acción pendiente post-login */
+  openLoginModal: (pendingAction?: () => void) => void;
 }
 
 export function useAuth(): UseAuthReturn {
@@ -24,6 +25,8 @@ export function useAuth(): UseAuthReturn {
 
   const logout = useCallback(() => {
     clearSession();
+    // Limpiar datos del módulo supermercado para no filtrar datos entre usuarios
+    useShoppingListStore.getState().resetStore();
   }, [clearSession]);
 
   return {

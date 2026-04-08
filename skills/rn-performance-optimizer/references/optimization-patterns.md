@@ -11,6 +11,7 @@ Guía detallada con código de referencia para cada técnica de optimización. L
 5. [Optimización de Animaciones](#optimización-de-animaciones)
 6. [Re-renders — Detección y Prevención](#re-renders--detección-y-prevención)
 7. [Storage — MMKV vs AsyncStorage](#storage--mmkv-vs-asyncstorage)
+8. [Resiliencia de UI — Error Boundaries y Try-Catch](#resiliencia-de-ui--error-boundaries-y-try-catch)
 
 ---
 
@@ -463,3 +464,233 @@ export const secureStorage = {
   contains: (key: string) => storage.contains(key),
 } as const;
 ```
+
+---
+
+## Resiliencia de UI — Error Boundaries y Try-Catch
+
+Un crash no atrapado en un componente puede tumbar toda la app. En React Native no hay página en blanco — es un cierre forzado. Las técnicas de resiliencia protegen la experiencia del usuario aislando fallos y evitando pantallas rotas.
+
+### Regla de Oro
+
+> **Una excepción en un módulo NUNCA debe romper la app entera.** Usa Error Boundaries para aislar fallos de renderizado y try-catch para aislar fallos de lógica asíncrona.
+
+### Error Boundary — Protección a Nivel de Componente
+
+React Error Boundaries capturan errores durante el renderizado, en lifecycle methods, y en constructores del árbol de componentes hijo. Son la **única** forma de atrapar errores de render en React.
+
+```typescript
+// shared/presentation/components/error-boundary.tsx
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  /** Componente a mostrar cuando hay un error. Recibe onRetry para reintentar. */
+  fallback: (props: { error: Error; onRetry: () => void }) => ReactNode;
+}
+
+interface ErrorBoundaryState {
+  error: Error | null;
+}
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    // Enviar a servicio de crash reporting (Sentry, Crashlytics, etc.)
+    console.error('[ErrorBoundary]', error, info.componentStack);
+  }
+
+  private handleRetry = () => {
+    this.setState({ error: null });
+  };
+
+  render() {
+    if (this.state.error) {
+      return this.props.fallback({
+        error: this.state.error,
+        onRetry: this.handleRetry,
+      });
+    }
+    return this.props.children;
+  }
+}
+```
+
+### Dónde Colocar Error Boundaries
+
+```
+App (RootLayout)
+├── ErrorBoundary (nivel app — fallback global: "Algo salió mal" + reintentar)
+│   ├── TabNavigator
+│   │   ├── ErrorBoundary (nivel tab — aísla cada tab)
+│   │   │   └── HomeScreen
+│   │   │       ├── ErrorBoundary (nivel feature — aísla secciones)
+│   │   │       │   └── MatchList (si falla, el resto de Home sigue vivo)
+│   │   │       └── StatsSection
+│   │   ├── ErrorBoundary
+│   │   │   └── ProfileScreen
+```
+
+```typescript
+// ✅ CORRECTO — Error Boundary aísla una sección de la pantalla
+function HomeScreen() {
+  return (
+    <ScrollView className="flex-1">
+      <WelcomeHeader />
+      <ErrorBoundary fallback={({ onRetry }) => <SectionErrorCard onRetry={onRetry} />}>
+        <RecentMatches />
+      </ErrorBoundary>
+      <ErrorBoundary fallback={({ onRetry }) => <SectionErrorCard onRetry={onRetry} />}>
+        <QuickStats />
+      </ErrorBoundary>
+    </ScrollView>
+  );
+}
+
+// ❌ INCORRECTO — Error Boundary solo en la raíz: si MatchList falla, toda la app muestra error
+function App() {
+  return (
+    <ErrorBoundary fallback={GlobalError}>
+      <RootNavigator />
+    </ErrorBoundary>
+  );
+}
+```
+
+### Try-Catch — Protección en Lógica Asíncrona
+
+Error Boundaries **NO** capturan errores en:
+- Event handlers (`onPress`, `onSubmit`)
+- Código asíncrono (`async/await`, Promises, `setTimeout`)
+- Errores del lado del servidor
+
+Para estos casos, usa try-catch explícito.
+
+```typescript
+// ✅ CORRECTO — try-catch en event handler con feedback al usuario
+function useDeleteItem() {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleDelete = useCallback(async (itemId: string) => {
+    try {
+      setError(null);
+      await deleteItemUseCase.execute(itemId);
+    } catch (err) {
+      const message = err instanceof AppError
+        ? err.userMessage
+        : 'No se pudo eliminar el elemento. Intenta de nuevo.';
+      setError(message);
+    }
+  }, []);
+
+  return { handleDelete, error };
+}
+```
+
+```typescript
+// ❌ INCORRECTO — async sin try-catch: crash silencioso o unhandled rejection
+const handleDelete = async (itemId: string) => {
+  await deleteItemUseCase.execute(itemId); // Si falla, la app puede crashear
+};
+
+// ❌ INCORRECTO — try-catch que traga el error sin feedback
+const handleDelete = async (itemId: string) => {
+  try {
+    await deleteItemUseCase.execute(itemId);
+  } catch {
+    // Silencio total — el usuario no sabe qué pasó
+  }
+};
+```
+
+### Try-Catch en Hooks de Datos (TanStack Query)
+
+TanStack Query atrapa errores internamente, pero debes manejar el estado de error en la UI:
+
+```typescript
+// ✅ CORRECTO — manejar error de query en la UI
+function MatchList() {
+  const { data, error, refetch, isLoading } = useMatches();
+
+  if (error) {
+    return (
+      <ErrorCard
+        message="No se pudieron cargar los partidos"
+        onRetry={refetch}
+      />
+    );
+  }
+
+  if (isLoading) return <MatchListSkeleton />;
+
+  return <FlashList data={data} /* ... */ />;
+}
+```
+
+### Try-Catch en Inicialización y Parseo
+
+Operaciones que dependen de datos externos (storage, JSON, deep links) siempre pueden fallar:
+
+```typescript
+// ✅ CORRECTO — parseo defensivo de datos de storage
+function loadCachedUser(): CachedUser | null {
+  try {
+    const raw = secureStorage.get('cached_user');
+    if (!raw) return null;
+    return JSON.parse(raw) as CachedUser;
+  } catch {
+    // Dato corrupto en storage — limpiamos y seguimos
+    secureStorage.remove('cached_user');
+    return null;
+  }
+}
+
+// ✅ CORRECTO — proteger inicialización de módulos que pueden fallar
+async function initializeApp() {
+  const results = await Promise.allSettled([
+    Font.loadAsync(customFonts),
+    checkAuthStatus(),
+    loadRemoteConfig(),
+  ]);
+
+  // Promise.allSettled nunca rechaza — procesar resultados individualmente
+  const [fontsResult, authResult, configResult] = results;
+
+  if (fontsResult.status === 'rejected') {
+    console.warn('Fonts failed to load, using system fonts');
+  }
+  if (configResult.status === 'rejected') {
+    console.warn('Remote config failed, using defaults');
+  }
+  // Auth failure sí es crítico — manejarlo según el caso
+}
+```
+
+### Tabla Rápida — Qué Mecanismo Usar
+
+| Escenario | Mecanismo | Por qué |
+|-----------|-----------|---------|
+| Error en render de componente hijo | `ErrorBoundary` | Única forma de atrapar errores de render en React |
+| Error en `onPress`/`onSubmit` | `try-catch` en el handler | Error Boundary no atrapa event handlers |
+| Error en `async/await` (API, storage) | `try-catch` + estado de error en UI | Error Boundary no atrapa código async |
+| Error en inicialización de la app | `Promise.allSettled` + fallbacks | Evita que un módulo que falla impida el arranque |
+| Error en parseo de JSON/datos externos | `try-catch` + valor por defecto | Datos corruptos no deben crashear la app |
+| Múltiples secciones independientes en pantalla | `ErrorBoundary` por sección | Si una sección falla, las demás siguen funcionando |
+
+### Reglas de Resiliencia
+
+| # | Regla | Impacto |
+|---|-------|---------|
+| 1 | Envolver cada tab/screen en un `ErrorBoundary` con fallback retry | Alto |
+| 2 | Envolver secciones independientes de una pantalla en `ErrorBoundary` | Alto |
+| 3 | Todo `async/await` en event handlers debe estar en `try-catch` | Alto |
+| 4 | Usar `Promise.allSettled` en inicialización para no bloquear la app | Medio-Alto |
+| 5 | Parseo de JSON externo siempre en `try-catch` con fallback | Medio |
+| 6 | Nunca tragar errores silenciosamente — siempre dar feedback al usuario o loguear | Medio |
+| 7 | Errores en queries (TanStack) deben reflejarse en UI con opción de reintentar | Medio |
+| 8 | Un `ErrorBoundary` en la raíz como última línea de defensa, no como única | Bajo-Medio |

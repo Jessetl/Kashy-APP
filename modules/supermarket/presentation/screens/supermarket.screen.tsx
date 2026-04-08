@@ -1,88 +1,512 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+import { useExchangeRate } from '@/modules/shared-services/exchange-rate/presentation/use-exchange-rate';
+import { BottomSheetModal } from '@/shared/presentation/components/ui/bottom-sheet-modal';
+import { useAuth } from '@/shared/presentation/hooks/auth/use-auth';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { Plus } from 'lucide-react-native';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type {
+  ProductCategory,
+  ShoppingItem,
+  ShoppingList,
+} from '../../domain/entities/shopping-list.entity';
+import { useShoppingListStore } from '../../infrastructure/store/shopping-list.store';
+import { AddProductForm } from '../components/add-product-form';
+import { CategoryGroup } from '../components/category-group';
+import { CategoryTabs } from '../components/category-tabs';
+import { EmptyList } from '../components/empty-list';
+import { ListHeaderBar } from '../components/list-header-bar';
+import { ListSettingsRow } from '../components/list-settings-row';
+import { ParallaxScrollView } from '../components/parallax-scroll-view';
+import { ProductCounter } from '../components/product-counter';
+import { SaveListForm } from '../components/save-list-form';
+import { SavedListsSheet } from '../components/saved-lists-sheet';
+import { SummaryCards } from '../components/summary-cards';
+import { ViewToggle, type ViewMode } from '../components/view-toggle';
+
+const LIST_HEADER_BAR_HEIGHT = 48;
+const FAB_SCROLL_CLEARANCE = -48;
 
 export default function SupermarketScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const { isAuthenticated, openLoginModal } = useAuth();
+  const { rate, localToUsd } = useExchangeRate();
+
+  const activeList = useShoppingListStore((s) => s.activeList);
+  const addItem = useShoppingListStore((s) => s.addItem);
+  const removeItem = useShoppingListStore((s) => s.removeItem);
+  const toggleItemPurchased = useShoppingListStore(
+    (s) => s.toggleItemPurchased,
+  );
+  const updateItemQuantity = useShoppingListStore((s) => s.updateItemQuantity);
+  const updateListSettings = useShoppingListStore((s) => s.updateListSettings);
+  const setExchangeRate = useShoppingListStore((s) => s.setExchangeRate);
+  const lists = useShoppingListStore((s) => s.lists);
+  const isLoading = useShoppingListStore((s) => s.isLoading);
+  const setActiveList = useShoppingListStore((s) => s.setActiveList);
+  const saveList = useShoppingListStore((s) => s.saveList);
+  const deleteList = useShoppingListStore((s) => s.deleteList);
+  const createList = useShoppingListStore((s) => s.createList);
+  const loadLists = useShoppingListStore((s) => s.loadLists);
+
+  const [category, setCategory] = useState<ProductCategory>('COMIDA');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSavedListsModal, setShowSavedListsModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  const didInit = useRef(false);
+
+  useEffect(() => {
+    if (didInit.current) return;
+    didInit.current = true;
+
+    void (async () => {
+      await loadLists();
+      const state = useShoppingListStore.getState();
+      if (state.lists.length === 0 && !state.activeList) {
+        await createList('Nueva lista');
+      } else if (!state.activeList && state.lists.length > 0) {
+        state.setActiveList(state.lists[0]);
+      }
+    })();
+  }, [loadLists, createList]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void useShoppingListStore.getState().syncGuestData();
+    }
+  }, [isAuthenticated]);
+
+  // Set exchange rate in the store so totals recalculate properly
+  useEffect(() => {
+    if (
+      rate &&
+      activeList &&
+      activeList.exchangeRateSnapshot !== rate.rateLocalPerUsd
+    ) {
+      setExchangeRate(rate.rateLocalPerUsd);
+    }
+  }, [rate, activeList, setExchangeRate]);
+
+  const items = useMemo(() => activeList?.items ?? [], [activeList?.items]);
+
+  const purchasedCount = useMemo(
+    () => items.filter((i) => i.isPurchased).length,
+    [items],
+  );
+  const totalItems = items.length;
+
+  const totalLocal = activeList?.totalLocal ?? 0;
+  const totalUsd = rate ? localToUsd(totalLocal) : 0;
+
+  const spentLocal = useMemo(
+    () =>
+      items
+        .filter((i) => i.isPurchased)
+        .reduce((sum, i) => sum + i.totalLocal, 0),
+    [items],
+  );
+
+  const exchangeRateValue = activeList?.exchangeRateSnapshot ?? null;
+
+  // Group items by category
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, ShoppingItem[]> = {};
+    for (const item of items) {
+      const cat = item.category || 'otros';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    }
+    return Object.entries(groups);
+  }, [items]);
+
+  const handleOpenAddModal = useCallback(() => {
+    setEditingItem(null);
+    setShowAddModal(true);
+  }, []);
+
+  const handleCloseAddModal = useCallback(() => {
+    setShowAddModal(false);
+    setEditingItem(null);
+  }, []);
+
+  const handleAddProduct = useCallback(
+    (name: string, price: number) => {
+      if (editingItem) {
+        void useShoppingListStore.getState().updateItem(editingItem.id, {
+          productName: name,
+          category: editingItem.category,
+          unitPriceLocal: price,
+          quantity: editingItem.quantity,
+        });
+      } else {
+        void addItem({
+          productName: name,
+          category,
+          unitPriceLocal: price,
+          quantity: 1,
+        });
+      }
+      setShowAddModal(false);
+      setEditingItem(null);
+    },
+    [addItem, category, editingItem],
+  );
+
+  const handleToggleItem = useCallback(
+    (id: string) => void toggleItemPurchased(id),
+    [toggleItemPurchased],
+  );
+
+  const handleDeleteItem = useCallback(
+    (id: string) => void removeItem(id),
+    [removeItem],
+  );
+
+  const handleQuantityChange = useCallback(
+    (id: string, quantity: number) => void updateItemQuantity(id, quantity),
+    [updateItemQuantity],
+  );
+
+  const handleEditItem = useCallback((item: ShoppingItem) => {
+    setEditingItem(item);
+    setShowAddModal(true);
+  }, []);
+
+  const handleToggleIva = useCallback(() => {
+    void updateListSettings({ ivaEnabled: !activeList?.ivaEnabled });
+  }, [updateListSettings, activeList?.ivaEnabled]);
+
+  const handleSave = useCallback(() => {
+    if (!isAuthenticated) {
+      openLoginModal(() => setShowSaveModal(true));
+      return;
+    }
+    setShowSaveModal(true);
+  }, [isAuthenticated, openLoginModal]);
+
+  const handleSaveList = useCallback(
+    (name: string, storeName: string) => {
+      void saveList(name, storeName);
+      setShowSaveModal(false);
+    },
+    [saveList],
+  );
+
+  const handleOpenSavedLists = useCallback(() => {
+    if (!isAuthenticated) {
+      openLoginModal(() => {
+        void loadLists();
+        setShowSavedListsModal(true);
+      });
+      return;
+    }
+    void loadLists();
+    setShowSavedListsModal(true);
+  }, [isAuthenticated, openLoginModal, loadLists]);
+
+  // Only show server-persisted lists in the Folder modal (never local working lists)
+  const savedLists = useMemo(
+    () => lists.filter((l) => !l.id.startsWith('local-')),
+    [lists],
+  );
+
+  const handleSelectSavedList = useCallback(
+    (list: ShoppingList) => {
+      setActiveList(list);
+      setShowSavedListsModal(false);
+    },
+    [setActiveList],
+  );
+
+  const handleDeleteList = useCallback(() => {
+    if (!activeList) return;
+
+    const isLocal = activeList.id.startsWith('local-');
+    const listName = activeList.name || 'esta lista';
+
+    // Local lists with no items — just reset silently
+    if (isLocal && activeList.items.length === 0) {
+      void createList('Nueva lista');
+      return;
+    }
+
+    Alert.alert(
+      'Eliminar lista',
+      isLocal
+        ? `Se eliminara "${listName}" y todos sus productos.`
+        : `Se eliminara "${listName}" de tus listas guardadas. Esta accion no se puede deshacer.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              await deleteList(activeList.id);
+              await createList('Nueva lista');
+            })();
+          },
+        },
+      ],
+    );
+  }, [activeList, deleteList, createList]);
+
+  const parallaxIntensity = useMemo(
+    () => ({
+      stickyDistance: Math.max(104, Math.min(196, windowHeight * 0.24)),
+      followAfterSticky: 0.86,
+      liftMax: 72,
+      liftRange: 220,
+      pullDownScale: 1.035,
+    }),
+    [windowHeight],
+  );
+
+  const listViewportMinHeight = useMemo(
+    () => Math.max(0, windowHeight - insets.top - LIST_HEADER_BAR_HEIGHT),
+    [windowHeight, insets.top],
+  );
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.contentContainer,
-        { paddingTop: insets.top + 16, paddingBottom: 100 },
-      ]}
-      showsVerticalScrollIndicator={false}
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Text style={[styles.title, { color: colors.text }]}>Supermercado</Text>
-      <Text style={[styles.subtitle, { color: colors.gradientEnd }]}>
-        Gestiona tus listas de compras
-      </Text>
-
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.backgroundSecondary },
-        ]}
-      >
-        <Text style={[styles.cardTitle, { color: colors.textOnSurface }]}>
-          Nueva Lista
-        </Text>
-        <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-          Crea una lista de compras y compara precios en VES y USD
-        </Text>
+      <View style={[styles.flex, { paddingTop: insets.top }]}>
+        <ListHeaderBar
+          onShare={() => {}}
+          onSave={handleSave}
+          onOpenSavedLists={handleOpenSavedLists}
+          onDelete={handleDeleteList}
+        />
+        <ParallaxScrollView
+          intensity={parallaxIntensity}
+          bottomPadding={insets.bottom + FAB_SCROLL_CLEARANCE}
+          contentContainerStyle={styles.scrollContent}
+          headerStyle={styles.headerContainer}
+          contentStyle={[
+            styles.listSection,
+            {
+              backgroundColor: colors.backgroundSecondary,
+              minHeight: listViewportMinHeight,
+            },
+          ]}
+          header={
+            <View style={styles.headerContent}>
+              <View style={styles.titleRow}>
+                <ProductCounter purchased={purchasedCount} total={totalItems} />
+                <View style={styles.titleTextContainer}>
+                  <Text style={[styles.title, { color: colors.text }]}>
+                    Supermercado
+                  </Text>
+                  <Text
+                    style={[styles.listName, { color: colors.textSecondary }]}
+                  >
+                    {activeList?.name ?? 'Nueva lista'}
+                  </Text>
+                </View>
+              </View>
+              <ListSettingsRow
+                ivaEnabled={activeList?.ivaEnabled ?? false}
+                onToggleIva={handleToggleIva}
+              />
+              <SummaryCards
+                totalLocal={totalLocal}
+                totalUsd={totalUsd}
+                spentLocal={spentLocal}
+                ivaEnabled={activeList?.ivaEnabled ?? false}
+              />
+            </View>
+          }
+        >
+          <ViewToggle
+            mode={viewMode}
+            onToggle={setViewMode}
+            itemCount={totalItems}
+          />
+          <View style={styles.productListContent}>
+            {totalItems === 0 ? (
+              <EmptyList />
+            ) : (
+              groupedItems.map(([cat, catItems]) => (
+                <CategoryGroup
+                  key={cat}
+                  category={cat}
+                  items={catItems}
+                  exchangeRate={exchangeRateValue}
+                  onToggle={handleToggleItem}
+                  onDelete={handleDeleteItem}
+                  onEdit={handleEditItem}
+                  onQuantityChange={handleQuantityChange}
+                />
+              ))
+            )}
+          </View>
+        </ParallaxScrollView>
+        {/* FAB */}
+        <Pressable
+          onPress={handleOpenAddModal}
+          style={[
+            styles.fab,
+            {
+              backgroundColor: colors.primary,
+              bottom: insets.bottom + 16,
+            },
+          ]}
+        >
+          <Plus size={28} color={colors.textInverse} />
+        </Pressable>
+        {/* Add/Edit product modal */}
+        <BottomSheetModal
+          visible={showAddModal}
+          onClose={handleCloseAddModal}
+          heightRatio={0.4}
+        >
+          <View style={styles.modalContent}>
+            <Text style={[styles.modalTitle, { color: colors.textOnSurface }]}>
+              {editingItem ? 'Editar producto' : 'Agregar producto'}
+            </Text>
+            {!editingItem && (
+              <CategoryTabs selected={category} onSelect={setCategory} />
+            )}
+            <AddProductForm
+              onAdd={handleAddProduct}
+              initialName={editingItem?.productName}
+              initialPrice={editingItem?.unitPriceLocal?.toString()}
+            />
+          </View>
+        </BottomSheetModal>
+        {/* Save list modal */}
+        <BottomSheetModal
+          visible={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          heightRatio={0.35}
+        >
+          <View style={styles.modalContent}>
+            <Text style={[styles.modalTitle, { color: colors.textOnSurface }]}>
+              Guardar lista
+            </Text>
+            <SaveListForm
+              onSave={handleSaveList}
+              initialName={activeList?.name}
+              initialStoreName={activeList?.storeName ?? undefined}
+            />
+          </View>
+        </BottomSheetModal>
+        {/* Saved lists modal */}
+        <BottomSheetModal
+          visible={showSavedListsModal}
+          onClose={() => setShowSavedListsModal(false)}
+          heightRatio={0.6}
+        >
+          <View style={[styles.modalContent, styles.flex]}>
+            <Text style={[styles.modalTitle, { color: colors.textOnSurface }]}>
+              Mis listas
+            </Text>
+            <SavedListsSheet
+              lists={savedLists}
+              activeListId={activeList?.id ?? null}
+              isLoading={isLoading}
+              onSelect={handleSelectSavedList}
+            />
+          </View>
+        </BottomSheetModal>
       </View>
-
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.backgroundSecondary },
-        ]}
-      >
-        <Text style={[styles.cardTitle, { color: colors.textOnSurface }]}>
-          Historial
-        </Text>
-        <Text style={[styles.cardDescription, { color: colors.textSecondary }]}>
-          Revisa tus compras anteriores y tendencias de precios
-        </Text>
-      </View>
-    </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
   },
-  contentContainer: {
-    paddingHorizontal: 20,
-    gap: 16,
+  headerContainer: {
+    marginBottom: 8,
+    zIndex: 1,
+  },
+  headerContent: {
+    paddingHorizontal: 16,
+    gap: 14,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  titleTextContainer: {
+    flex: 1,
+    gap: 2,
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
   },
-  subtitle: {
-    fontSize: 15,
-    fontWeight: '400',
-    marginTop: -8,
-  },
-  card: {
-    borderRadius: 16,
-    padding: 20,
-    gap: 6,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  cardDescription: {
+  listName: {
     fontSize: 14,
     fontWeight: '400',
-    lineHeight: 20,
+  },
+  listSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+    gap: 12,
+    zIndex: 2,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    gap: 0,
+  },
+  listHeaderBarWrap: {
+    marginHorizontal: -16,
+    marginBottom: 2,
+  },
+  productListContent: {
+    paddingTop: 8,
+    gap: 12,
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  modalContent: {
+    gap: 16,
+    paddingTop: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
   },
 });
