@@ -1,7 +1,8 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback } from 'react';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { Platform, StyleSheet, Text } from 'react-native';
 
 interface SocialButtonProps {
   /** Nombre del provider (Google, Facebook, Apple) */
@@ -30,7 +31,7 @@ export const SocialButton = React.memo(function SocialButton({
   }, [provider, onPress]);
 
   return (
-    <Pressable
+    <AppPressable
       onPress={handlePress}
       style={[
         styles.container,
@@ -40,18 +41,13 @@ export const SocialButton = React.memo(function SocialButton({
         },
       ]}
     >
-      <Text
-        style={[
-          styles.icon,
-          { color: iconColor ?? colors.textOnSurface },
-        ]}
-      >
+      <Text style={[styles.icon, { color: iconColor ?? colors.textOnSurface }]}>
         {icon}
       </Text>
       <Text style={[styles.label, { color: colors.textOnSurface }]}>
         {provider}
       </Text>
-    </Pressable>
+    </AppPressable>
   );
 });
 

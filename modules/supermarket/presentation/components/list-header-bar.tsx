@@ -1,7 +1,8 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import { Bookmark, Folder, Share2, Trash2 } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 interface ListHeaderBarProps {
   onShare?: () => void;
@@ -23,24 +24,24 @@ export const ListHeaderBar = React.memo(function ListHeaderBar({
     <View style={styles.container}>
       <View style={styles.rightActions}>
         {onShare && (
-          <Pressable onPress={onShare} hitSlop={8} style={styles.iconButton}>
-            <Share2 size={20} color={iconColor} />
-          </Pressable>
+          <AppPressable onPress={onShare} style={styles.iconButton}>
+            <Share2 pointerEvents='none' size={20} color={iconColor} />
+          </AppPressable>
         )}
         {onSave && (
-          <Pressable onPress={onSave} hitSlop={8} style={styles.iconButton}>
-            <Bookmark size={20} color={iconColor} />
-          </Pressable>
+          <AppPressable onPress={onSave} style={styles.iconButton}>
+            <Bookmark pointerEvents='none' size={20} color={iconColor} />
+          </AppPressable>
         )}
         {onOpenSavedLists && (
-          <Pressable onPress={onOpenSavedLists} hitSlop={8} style={styles.iconButton}>
-            <Folder size={20} color={iconColor} />
-          </Pressable>
+          <AppPressable onPress={onOpenSavedLists} style={styles.iconButton}>
+            <Folder pointerEvents='none' size={20} color={iconColor} />
+          </AppPressable>
         )}
         {onDelete && (
-          <Pressable onPress={onDelete} hitSlop={8} style={styles.iconButton}>
-            <Trash2 size={20} color={iconColor} />
-          </Pressable>
+          <AppPressable onPress={onDelete} style={styles.iconButton}>
+            <Trash2 pointerEvents='none' size={20} color={iconColor} />
+          </AppPressable>
         )}
       </View>
     </View>

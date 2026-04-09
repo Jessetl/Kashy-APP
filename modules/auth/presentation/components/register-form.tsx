@@ -5,10 +5,11 @@ import {
   ErrorBanner,
   SocialButton,
 } from '@/shared/presentation/components/ui';
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import React, { useCallback } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { useRegister, type RegisterFormValues } from '../hooks/use-register';
 
@@ -248,11 +249,11 @@ export const RegisterForm = React.memo(function RegisterForm({
         <Text style={[styles.switchText, { color: colors.textSecondary }]}>
           ¿Ya tienes cuenta?
         </Text>
-        <Pressable onPress={onSwitchToLogin}>
+        <AppPressable onPress={onSwitchToLogin}>
           <Text style={[styles.switchLink, { color: colors.primary }]}>
             Inicia Sesión
           </Text>
-        </Pressable>
+        </AppPressable>
       </View>
     </>
   );

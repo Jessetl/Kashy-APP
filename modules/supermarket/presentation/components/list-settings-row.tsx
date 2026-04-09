@@ -1,6 +1,7 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface ListSettingsRowProps {
   ivaEnabled: boolean;
@@ -15,7 +16,7 @@ export const ListSettingsRow = React.memo(function ListSettingsRow({
 
   return (
     <View style={styles.container}>
-      <Pressable
+      <AppPressable
         onPress={onToggleIva}
         style={[
           styles.toggle,
@@ -55,7 +56,7 @@ export const ListSettingsRow = React.memo(function ListSettingsRow({
         >
           IVA 16%
         </Text>
-      </Pressable>
+      </AppPressable>
     </View>
   );
 });

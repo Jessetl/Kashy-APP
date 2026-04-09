@@ -1,8 +1,9 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColor } from '@/shared/presentation/hooks/use-app-theme';
 import * as Haptics from 'expo-haptics';
 import { Bell } from 'lucide-react-native';
 import React, { useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 const ICON_SIZE = 22;
 const BUTTON_SIZE = 40;
@@ -28,7 +29,7 @@ export const NotificationButton = React.memo(function NotificationButton({
   }, [onPress]);
 
   return (
-    <Pressable
+    <AppPressable
       onPress={handlePress}
       style={[styles.button, { backgroundColor: 'rgba(255,255,255,0.15)' }]}
       accessibilityRole='button'
@@ -37,13 +38,12 @@ export const NotificationButton = React.memo(function NotificationButton({
           ? `Notificaciones, ${badgeCount} sin leer`
           : 'Notificaciones'
       }
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
       <Bell size={ICON_SIZE} color={text} strokeWidth={2} />
       {badgeCount > 0 && (
         <View style={[styles.badge, { backgroundColor: danger }]} />
       )}
-    </Pressable>
+    </AppPressable>
   );
 });
 

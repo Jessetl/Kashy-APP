@@ -1,7 +1,8 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import { Bookmark } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 interface SaveListFormProps {
   onSave: (name: string, storeName: string) => void;
@@ -40,13 +41,13 @@ export const SaveListForm = React.memo(function SaveListForm({
               color: colors.textOnSurface,
             },
           ]}
-          placeholder="Nombre de la lista"
+          placeholder='Nombre de la lista'
           placeholderTextColor={colors.textTertiary}
           value={listName}
           onChangeText={setListName}
           autoCorrect={false}
-          autoCapitalize="sentences"
-          returnKeyType="next"
+          autoCapitalize='sentences'
+          returnKeyType='next'
           autoFocus
         />
         <TextInput
@@ -57,17 +58,17 @@ export const SaveListForm = React.memo(function SaveListForm({
               color: colors.textOnSurface,
             },
           ]}
-          placeholder="Establecimiento"
+          placeholder='Establecimiento'
           placeholderTextColor={colors.textTertiary}
           value={storeName}
           onChangeText={setStoreName}
           autoCorrect={false}
-          autoCapitalize="sentences"
-          returnKeyType="done"
+          autoCapitalize='sentences'
+          returnKeyType='done'
           onSubmitEditing={handleSave}
         />
       </View>
-      <Pressable
+      <AppPressable
         onPress={handleSave}
         disabled={!isValid}
         style={[
@@ -83,7 +84,7 @@ export const SaveListForm = React.memo(function SaveListForm({
           size={26}
           color={isValid ? colors.textInverse : colors.textTertiary}
         />
-      </Pressable>
+      </AppPressable>
     </View>
   );
 });

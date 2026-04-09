@@ -1,8 +1,8 @@
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import React from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   type ViewStyle,
@@ -39,7 +39,7 @@ export const AppButton = React.memo(function AppButton({
   const variantStyles = getVariantStyles(variant, colors);
 
   return (
-    <Pressable
+    <AppPressable
       onPress={onPress}
       disabled={isDisabled}
       style={[
@@ -56,7 +56,7 @@ export const AppButton = React.memo(function AppButton({
           {title}
         </Text>
       )}
-    </Pressable>
+    </AppPressable>
   );
 });
 

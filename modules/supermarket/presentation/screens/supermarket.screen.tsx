@@ -2,7 +2,6 @@ import { useExchangeRate } from '@/modules/shared-services/exchange-rate/present
 import { BottomSheetModal } from '@/shared/presentation/components/ui/bottom-sheet-modal';
 import { useAuth } from '@/shared/presentation/hooks/auth/use-auth';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
-import { Plus } from 'lucide-react-native';
 import React, {
   useCallback,
   useEffect,
@@ -14,7 +13,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -41,7 +39,6 @@ import { SummaryCards } from '../components/summary-cards';
 import { ViewToggle, type ViewMode } from '../components/view-toggle';
 
 const LIST_HEADER_BAR_HEIGHT = 48;
-const FAB_SCROLL_CLEARANCE = -48;
 
 export default function SupermarketScreen() {
   const { colors } = useAppTheme();
@@ -69,7 +66,6 @@ export default function SupermarketScreen() {
 
   const [category, setCategory] = useState<ProductCategory>('COMIDA');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [showAddModal, setShowAddModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSavedListsModal, setShowSavedListsModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
@@ -140,13 +136,7 @@ export default function SupermarketScreen() {
     return Object.entries(groups);
   }, [items]);
 
-  const handleOpenAddModal = useCallback(() => {
-    setEditingItem(null);
-    setShowAddModal(true);
-  }, []);
-
-  const handleCloseAddModal = useCallback(() => {
-    setShowAddModal(false);
+  const handleCancelEdit = useCallback(() => {
     setEditingItem(null);
   }, []);
 
@@ -167,7 +157,6 @@ export default function SupermarketScreen() {
           quantity: 1,
         });
       }
-      setShowAddModal(false);
       setEditingItem(null);
     },
     [addItem, category, editingItem],
@@ -190,7 +179,6 @@ export default function SupermarketScreen() {
 
   const handleEditItem = useCallback((item: ShoppingItem) => {
     setEditingItem(item);
-    setShowAddModal(true);
   }, []);
 
   const handleToggleIva = useCallback(() => {
@@ -302,7 +290,7 @@ export default function SupermarketScreen() {
         />
         <ParallaxScrollView
           intensity={parallaxIntensity}
-          bottomPadding={insets.bottom + FAB_SCROLL_CLEARANCE}
+          bottomPadding={8}
           contentContainerStyle={styles.scrollContent}
           headerStyle={styles.headerContainer}
           contentStyle={[
@@ -355,6 +343,7 @@ export default function SupermarketScreen() {
                   category={cat}
                   items={catItems}
                   exchangeRate={exchangeRateValue}
+                  viewMode={viewMode}
                   onToggle={handleToggleItem}
                   onDelete={handleDeleteItem}
                   onEdit={handleEditItem}
@@ -364,39 +353,26 @@ export default function SupermarketScreen() {
             )}
           </View>
         </ParallaxScrollView>
-        {/* FAB */}
-        <Pressable
-          onPress={handleOpenAddModal}
+        {/* Inline add/edit product section */}
+        <View
           style={[
-            styles.fab,
+            styles.addSection,
             {
-              backgroundColor: colors.primary,
-              bottom: insets.bottom + 16,
+              backgroundColor: colors.background,
+              borderTopColor: colors.border,
             },
           ]}
         >
-          <Plus size={28} color={colors.textInverse} />
-        </Pressable>
-        {/* Add/Edit product modal */}
-        <BottomSheetModal
-          visible={showAddModal}
-          onClose={handleCloseAddModal}
-          heightRatio={0.4}
-        >
-          <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: colors.textOnSurface }]}>
-              {editingItem ? 'Editar producto' : 'Agregar producto'}
-            </Text>
-            {!editingItem && (
-              <CategoryTabs selected={category} onSelect={setCategory} />
-            )}
-            <AddProductForm
-              onAdd={handleAddProduct}
-              initialName={editingItem?.productName}
-              initialPrice={editingItem?.unitPriceLocal?.toString()}
-            />
-          </View>
-        </BottomSheetModal>
+          {!editingItem && (
+            <CategoryTabs selected={category} onSelect={setCategory} />
+          )}
+          <AddProductForm
+            onAdd={handleAddProduct}
+            onCancelEdit={handleCancelEdit}
+            initialName={editingItem?.productName}
+            initialPrice={editingItem?.unitPriceLocal?.toString()}
+          />
+        </View>
         {/* Save list modal */}
         <BottomSheetModal
           visible={showSaveModal}
@@ -487,19 +463,16 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     gap: 12,
   },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    width: 58,
-    height: 58,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
+  addSection: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
+    gap: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  editingLabel: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   modalContent: {
     gap: 16,

@@ -1,8 +1,9 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import { type BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback } from 'react';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -44,7 +45,7 @@ const TabItem = React.memo(function TabItem({
   }, [scale]);
 
   return (
-    <Pressable
+    <AppPressable
       onPress={() => {
         if (Platform.OS === 'ios') {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -69,7 +70,7 @@ const TabItem = React.memo(function TabItem({
       >
         {icon}
       </Animated.View>
-    </Pressable>
+    </AppPressable>
   );
 });
 

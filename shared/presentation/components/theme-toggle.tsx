@@ -1,3 +1,4 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { markThemeToggleStart } from '@/shared/presentation/devtools/theme-profiler';
 import {
   useIsDarkMode,
@@ -7,7 +8,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { Moon, Sun } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -20,7 +21,7 @@ const ICON_SIZE = 22;
 const BUTTON_SIZE = 40;
 const MIN_TOGGLE_INTERVAL_MS = 100;
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const AnimatedPressable = Animated.createAnimatedComponent(AppPressable);
 
 export const ThemeToggle = React.memo(function ThemeToggle() {
   const lastToggleAtRef = useRef(0);
@@ -86,7 +87,6 @@ export const ThemeToggle = React.memo(function ThemeToggle() {
       accessibilityRole='switch'
       accessibilityState={{ checked: isDark }}
       accessibilityLabel={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
       <Animated.View pointerEvents='none' style={animatedIconStyle}>
         {isDark ? (

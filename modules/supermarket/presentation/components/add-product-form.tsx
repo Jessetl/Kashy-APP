@@ -1,22 +1,26 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
-import { Check, Plus } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Check, Plus, X } from 'lucide-react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 interface AddProductFormProps {
   onAdd: (name: string, price: number) => void;
+  onCancelEdit?: () => void;
   initialName?: string;
   initialPrice?: string;
 }
 
 export const AddProductForm = React.memo(function AddProductForm({
   onAdd,
+  onCancelEdit,
   initialName,
   initialPrice,
 }: AddProductFormProps) {
   const colors = useThemeColors();
   const [productName, setProductName] = useState(initialName ?? '');
   const [price, setPrice] = useState(initialPrice ?? '');
+  const priceRef = useRef<TextInput>(null);
 
   const isEditing = initialName != null;
 
@@ -48,44 +52,56 @@ export const AddProductForm = React.memo(function AddProductForm({
     price.length > 0 &&
     parseFloat(price.replace(',', '.')) > 0;
 
-  const ActionIcon = isEditing ? Check : Plus;
-
   return (
     <View style={styles.container}>
-      <View style={styles.inputsColumn}>
-        <TextInput
+      <TextInput
+        style={[
+          styles.input,
+          styles.nameInput,
+          {
+            backgroundColor: colors.backgroundTertiary,
+            color: colors.textOnSurface,
+          },
+        ]}
+        placeholder='Producto'
+        placeholderTextColor={colors.textTertiary}
+        value={productName}
+        onChangeText={setProductName}
+        autoCorrect={false}
+        autoCapitalize='sentences'
+        returnKeyType='next'
+        onSubmitEditing={() => priceRef.current?.focus()}
+      />
+      <TextInput
+        ref={priceRef}
+        style={[
+          styles.input,
+          styles.priceInput,
+          {
+            backgroundColor: colors.backgroundTertiary,
+            color: colors.textOnSurface,
+          },
+        ]}
+        placeholder='Bs.'
+        placeholderTextColor={colors.textTertiary}
+        value={price}
+        onChangeText={handlePriceChange}
+        keyboardType='numeric'
+        returnKeyType='done'
+        onSubmitEditing={handleAdd}
+      />
+      {isEditing && onCancelEdit && (
+        <AppPressable
+          onPress={onCancelEdit}
           style={[
-            styles.input,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              color: colors.textOnSurface,
-            },
+            styles.cancelButton,
+            { backgroundColor: colors.backgroundTertiary },
           ]}
-          placeholder='Producto'
-          placeholderTextColor={colors.textTertiary}
-          value={productName}
-          onChangeText={setProductName}
-          autoCorrect={false}
-          autoCapitalize='sentences'
-          returnKeyType='next'
-        />
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              color: colors.textOnSurface,
-            },
-          ]}
-          placeholder='Precio'
-          placeholderTextColor={colors.textTertiary}
-          value={price}
-          onChangeText={handlePriceChange}
-          keyboardType='numeric'
-          returnKeyType='done'
-        />
-      </View>
-      <Pressable
+        >
+          <X size={20} color={colors.textSecondary} pointerEvents='none' />
+        </AppPressable>
+      )}
+      <AppPressable
         onPress={handleAdd}
         disabled={!isValid}
         style={[
@@ -97,11 +113,20 @@ export const AddProductForm = React.memo(function AddProductForm({
           },
         ]}
       >
-        <ActionIcon
-          size={26}
-          color={isValid ? colors.textInverse : colors.textTertiary}
-        />
-      </Pressable>
+        {isEditing ? (
+          <Check
+            pointerEvents='none'
+            size={22}
+            color={isValid ? colors.textInverse : colors.textTertiary}
+          />
+        ) : (
+          <Plus
+            pointerEvents='none'
+            size={22}
+            color={isValid ? colors.textInverse : colors.textTertiary}
+          />
+        )}
+      </AppPressable>
     </View>
   );
 });
@@ -110,23 +135,32 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  inputsColumn: {
-    flex: 1,
     gap: 8,
   },
   input: {
-    height: 46,
+    height: 44,
     borderRadius: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     fontSize: 15,
     fontWeight: '500',
   },
+  nameInput: {
+    flex: 2,
+  },
+  priceInput: {
+    flex: 1,
+  },
+  cancelButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   addButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

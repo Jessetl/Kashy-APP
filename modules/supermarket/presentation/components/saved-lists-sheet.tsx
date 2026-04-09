@@ -1,3 +1,4 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import {
   ChevronRight,
@@ -8,7 +9,6 @@ import {
 import React from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -81,7 +81,7 @@ export const SavedListsSheet = React.memo(function SavedListsSheet({
       {lists.map((list) => {
         const isActive = list.id === activeListId;
         return (
-          <Pressable
+          <AppPressable
             key={list.id}
             onPress={() => onSelect(list)}
             style={[
@@ -143,7 +143,7 @@ export const SavedListsSheet = React.memo(function SavedListsSheet({
               </View>
             </View>
             <ChevronRight size={18} color={colors.textTertiary} />
-          </Pressable>
+          </AppPressable>
         );
       })}
     </ScrollView>

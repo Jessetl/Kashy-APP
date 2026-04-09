@@ -1,3 +1,4 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import { X } from 'lucide-react-native';
 import React, { useCallback, useEffect } from 'react';
@@ -6,7 +7,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -118,7 +118,7 @@ export const BottomSheetModal = React.memo(function BottomSheetModal({
         style={[styles.backdrop, animatedBackdropStyle]}
         pointerEvents='auto'
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} />
+        <AppPressable style={StyleSheet.absoluteFill} onPress={dismiss} />
       </Animated.View>
 
       {/* Sheet */}
@@ -149,7 +149,7 @@ export const BottomSheetModal = React.memo(function BottomSheetModal({
 
                 {/* Close Button */}
                 {showCloseButton && (
-                  <Pressable
+                  <AppPressable
                     onPress={dismiss}
                     style={[
                       styles.closeButton,
@@ -158,11 +158,12 @@ export const BottomSheetModal = React.memo(function BottomSheetModal({
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   >
                     <X
+                      pointerEvents='none'
                       size={20}
                       color={colors.textOnSurface}
                       strokeWidth={2.5}
                     />
-                  </Pressable>
+                  </AppPressable>
                 )}
 
                 {children}

@@ -1,3 +1,4 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import {
   Apple,
@@ -9,13 +10,7 @@ import {
   Utensils,
 } from 'lucide-react-native';
 import React, { useCallback } from 'react';
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import {
   PRODUCT_CATEGORIES,
   type ProductCategory,
@@ -28,7 +23,7 @@ interface CategoryTabsProps {
 
 const ICON_MAP: Record<
   string,
-  React.ComponentType<{ size: number; color: string }>
+  React.ComponentType<{ pointerEvents: 'none'; size: number; color: string }>
 > = {
   utensils: Utensils,
   apple: Apple,
@@ -53,7 +48,7 @@ const CategoryTab = React.memo(function CategoryTab({
   const Icon = ICON_MAP[item.icon];
 
   return (
-    <Pressable
+    <AppPressable
       onPress={onPress}
       style={[
         styles.tab,
@@ -67,6 +62,7 @@ const CategoryTab = React.memo(function CategoryTab({
     >
       {Icon && (
         <Icon
+          pointerEvents='none'
           size={14}
           color={isSelected ? colors.primary : colors.textSecondary}
         />
@@ -81,7 +77,7 @@ const CategoryTab = React.memo(function CategoryTab({
       >
         {item.label}
       </Text>
-    </Pressable>
+    </AppPressable>
   );
 });
 

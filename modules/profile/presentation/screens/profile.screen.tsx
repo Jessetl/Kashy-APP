@@ -1,7 +1,8 @@
+import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useAuth } from '@/shared/presentation/hooks/auth/use-auth';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
@@ -51,7 +52,7 @@ export default function ProfileScreen() {
         )}
 
         {!isAuthenticated && (
-          <Pressable
+          <AppPressable
             onPress={() => openLoginModal()}
             style={[styles.primaryButton, { backgroundColor: colors.primary }]}
           >
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
             >
               Iniciar Sesión
             </Text>
-          </Pressable>
+          </AppPressable>
         )}
       </View>
 
@@ -81,14 +82,14 @@ export default function ProfileScreen() {
 
       {/* Logout */}
       {isAuthenticated && (
-        <Pressable
+        <AppPressable
           onPress={logout}
           style={[styles.logoutButton, { backgroundColor: colors.dangerLight }]}
         >
           <Text style={[styles.logoutButtonText, { color: colors.danger }]}>
             Cerrar Sesión
           </Text>
-        </Pressable>
+        </AppPressable>
       )}
     </ScrollView>
   );

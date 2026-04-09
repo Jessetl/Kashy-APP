@@ -10,6 +10,9 @@ import {
 } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { LinearTransition } from 'react-native-reanimated';
+
+const ITEMS_LAYOUT = LinearTransition.duration(300);
 import {
   PRODUCT_CATEGORIES,
   type ShoppingItem,
@@ -29,10 +32,13 @@ const ICON_MAP: Record<
   ellipsis: Ellipsis,
 };
 
+type ViewMode = 'grid' | 'list';
+
 interface CategoryGroupProps {
   category: string;
   items: ShoppingItem[];
   exchangeRate: number | null;
+  viewMode: ViewMode;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit: (item: ShoppingItem) => void;
@@ -81,6 +87,7 @@ function areCategoryGroupPropsEqual(
 ): boolean {
   return (
     prevProps.category === nextProps.category &&
+    prevProps.viewMode === nextProps.viewMode &&
     prevProps.exchangeRate === nextProps.exchangeRate &&
     prevProps.onToggle === nextProps.onToggle &&
     prevProps.onDelete === nextProps.onDelete &&
@@ -94,6 +101,7 @@ export const CategoryGroup = React.memo(function CategoryGroup({
   category,
   items,
   exchangeRate,
+  viewMode,
   onToggle,
   onDelete,
   onEdit,
@@ -112,15 +120,7 @@ export const CategoryGroup = React.memo(function CategoryGroup({
   return (
     <View style={styles.container}>
       {/* Category header */}
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: colors.backgroundSecondary,
-            borderColor: colors.primary,
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <View style={styles.headerLeft}>
           {Icon && (
             <View
@@ -129,74 +129,84 @@ export const CategoryGroup = React.memo(function CategoryGroup({
                 { backgroundColor: colors.primaryLight },
               ]}
             >
-              <Icon size={16} color={colors.primary} />
+              <Icon size={14} color={colors.primary} />
             </View>
           )}
-          <Text style={[styles.headerLabel, { color: colors.textOnSurface }]}>
+          <Text style={[styles.headerLabel, { color: colors.textSecondary }]}>
             {label}
           </Text>
         </View>
-        <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-          <Text style={[styles.badgeText, { color: colors.textInverse }]}>
-            {items.length}
-          </Text>
-        </View>
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <Text style={[styles.countLabel, { color: colors.textTertiary }]}>
+          {items.length}
+        </Text>
       </View>
 
       {/* Items */}
-      {items.map((item) => (
-        <ProductItem
-          key={item.id}
-          item={item}
-          exchangeRate={exchangeRate}
-          onToggle={onToggle}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onQuantityChange={onQuantityChange}
-        />
-      ))}
+      <Animated.View
+        layout={ITEMS_LAYOUT}
+        style={[
+          styles.itemsContainer,
+          viewMode === 'list' && styles.itemsContainerList,
+        ]}
+      >
+        {items.map((item) => (
+          <ProductItem
+            key={item.id}
+            item={item}
+            exchangeRate={exchangeRate}
+            viewMode={viewMode}
+            onToggle={onToggle}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onQuantityChange={onQuantityChange}
+          />
+        ))}
+      </Animated.View>
     </View>
   );
 }, areCategoryGroupPropsEqual);
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: 10,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
+    gap: 10,
+    paddingHorizontal: 4,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 26,
+    height: 26,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  badge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  divider: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  countLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  itemsContainer: {
+    gap: 8,
+  },
+  itemsContainerList: {
+    gap: 4,
   },
 });

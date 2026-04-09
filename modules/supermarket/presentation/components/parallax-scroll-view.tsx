@@ -52,45 +52,39 @@ export function ParallaxScrollView({
 
   const followAfterSticky =
     intensity.followAfterSticky ?? DEFAULT_CONFIG.followAfterSticky;
-  const liftMax = intensity.liftMax ?? DEFAULT_CONFIG.liftMax;
-  const liftRange = intensity.liftRange ?? DEFAULT_CONFIG.liftRange;
   const pullDownScale = intensity.pullDownScale ?? DEFAULT_CONFIG.pullDownScale;
 
   const headerAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
     const y = scrollOffset.value;
     const positiveY = Math.max(0, y);
-    const stickyDistance = intensity.stickyDistance;
+    const sd = intensity.stickyDistance;
 
-    const compensatedScroll =
-      positiveY <= stickyDistance
-        ? positiveY
-        : stickyDistance + (positiveY - stickyDistance) * followAfterSticky;
-
-    const subtleLift = interpolate(
-      positiveY,
-      [0, stickyDistance + liftRange],
-      [0, -liftMax],
-      Extrapolation.CLAMP,
-    );
+    // Piecewise-linear with a cubic-hermite blend around the breakpoint
+    // so the velocity transition from 1.0 → followAfterSticky is smooth.
+    const blend = sd > 0 ? Math.min(positiveY / sd, 1) : 1;
+    // smoothstep: maps [0,1] → [0,1] with zero derivative at both ends
+    const smooth = blend * blend * (3 - 2 * blend);
+    // rate goes from 1 (fully sticky) to followAfterSticky (parallax)
+    const rate = 1 - smooth * (1 - followAfterSticky);
+    const compensatedScroll = positiveY * rate;
 
     const stretchScale = interpolate(
       y,
-      [-stickyDistance, 0],
+      [-sd, 0],
       [pullDownScale, 1],
       Extrapolation.CLAMP,
     );
 
     return {
       transform: [
-        { translateY: compensatedScroll + subtleLift },
+        { translateY: compensatedScroll },
         { scale: stretchScale },
       ],
     };
   }, [
     intensity.stickyDistance,
     followAfterSticky,
-    liftMax,
-    liftRange,
     pullDownScale,
   ]);
 
