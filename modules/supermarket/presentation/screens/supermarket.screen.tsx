@@ -260,6 +260,24 @@ export default function SupermarketScreen() {
     );
   }, [activeList, deleteList, createList]);
 
+  const handleNewList = useCallback(() => {
+    if (activeList && activeList.items.length > 0) {
+      Alert.alert(
+        'Nueva lista',
+        'Se creara una nueva lista vacia. La lista actual no guardada se perdera.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Crear nueva',
+            onPress: () => void createList('Nueva lista'),
+          },
+        ],
+      );
+    } else {
+      void createList('Nueva lista');
+    }
+  }, [activeList, createList]);
+
   const parallaxIntensity = useMemo(
     () => ({
       stickyDistance: Math.max(104, Math.min(196, windowHeight * 0.24)),
@@ -332,6 +350,7 @@ export default function SupermarketScreen() {
             mode={viewMode}
             onToggle={setViewMode}
             itemCount={totalItems}
+            onNewList={handleNewList}
           />
           <View style={styles.productListContent}>
             {totalItems === 0 ? (

@@ -1,6 +1,6 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
-import { LayoutGrid, List } from 'lucide-react-native';
+import { FilePlus, LayoutGrid, List } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -10,12 +10,14 @@ interface ViewToggleProps {
   mode: ViewMode;
   onToggle: (mode: ViewMode) => void;
   itemCount: number;
+  onNewList?: () => void;
 }
 
 export const ViewToggle = React.memo(function ViewToggle({
   mode,
   onToggle,
   itemCount,
+  onNewList,
 }: ViewToggleProps) {
   const colors = useThemeColors();
 
@@ -25,6 +27,24 @@ export const ViewToggle = React.memo(function ViewToggle({
         {itemCount} producto{itemCount !== 1 ? 's' : ''}
       </Text>
       <View style={styles.toggleGroup}>
+        {onNewList && (
+          <AppPressable
+            onPress={onNewList}
+            style={[
+              styles.toggleButton,
+              {
+                backgroundColor: colors.backgroundTertiary,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <FilePlus
+              pointerEvents='none'
+              size={16}
+              color={colors.textSecondary}
+            />
+          </AppPressable>
+        )}
         <AppPressable
           onPress={() => onToggle('grid')}
           style={[

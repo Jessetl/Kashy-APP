@@ -63,6 +63,7 @@ export default function TabsLayout() {
           name='profile'
           options={{
             title: 'Perfil',
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <User size={size} color={color} strokeWidth={2} />
             ),
