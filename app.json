@@ -50,6 +50,12 @@
       "tsconfigPaths": true,
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "c4126c67-98bc-4f2c-81dc-4b869624548a"
+      }
     }
   }
 }

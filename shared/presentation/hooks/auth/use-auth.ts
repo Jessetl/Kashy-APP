@@ -1,4 +1,5 @@
 import type { AuthUser } from '@/shared/domain/auth/auth.types';
+import { useDebtStore } from '@/modules/debts/infrastructure/store/debt.store';
 import { useShoppingListStore } from '@/modules/supermarket/infrastructure/store/shopping-list.store';
 import { useAuthStore } from '@/shared/infrastructure/auth/auth.store';
 import { useCallback } from 'react';
@@ -25,8 +26,9 @@ export function useAuth(): UseAuthReturn {
 
   const logout = useCallback(() => {
     clearSession();
-    // Limpiar datos del módulo supermercado para no filtrar datos entre usuarios
+    // Limpiar datos de módulos para no filtrar datos entre usuarios
     useShoppingListStore.getState().resetStore();
+    useDebtStore.getState().resetStore();
   }, [clearSession]);
 
   return {
