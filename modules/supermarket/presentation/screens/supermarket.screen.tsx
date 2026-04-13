@@ -124,7 +124,7 @@ export default function SupermarketScreen() {
     [items],
   );
 
-  const exchangeRateValue = activeList?.exchangeRateSnapshot ?? null;
+  const exchangeRateValue = rate?.rateLocalPerUsd ?? null;
 
   // Group items by category
   const groupedItems = useMemo(() => {

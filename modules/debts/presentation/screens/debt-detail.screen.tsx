@@ -4,6 +4,7 @@ import {
   BottomSheetModal,
 } from '@/shared/presentation/components/ui';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   AlertCircle,
@@ -44,6 +45,7 @@ const PRIORITY_CONFIG: Record<
 
 export default function DebtDetailScreen() {
   const { colors } = useAppTheme();
+  const { country } = useCountry();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -272,7 +274,7 @@ export default function DebtDetailScreen() {
               <Text
                 style={[styles.localValue, { color: colors.textOnSurface }]}
               >
-                Bs. {formatter.format(localAmount)}
+                {country.currency} {formatter.format(localAmount)}
               </Text>
             </View>
           )}

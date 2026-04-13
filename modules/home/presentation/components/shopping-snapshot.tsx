@@ -1,5 +1,6 @@
 import { AppPressable } from '@/shared/presentation/components/ui';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { useRouter } from 'expo-router';
 import { ArrowRight, ShoppingBag } from 'lucide-react-native';
 import React, { useCallback } from 'react';
@@ -26,6 +27,7 @@ export const ShoppingSnapshot = React.memo(function ShoppingSnapshot({
   exchangeRate,
 }: ShoppingSnapshotProps) {
   const { colors } = useAppTheme();
+  const { country } = useCountry();
   const router = useRouter();
 
   const handlePress = useCallback(() => {
@@ -70,7 +72,7 @@ export const ShoppingSnapshot = React.memo(function ShoppingSnapshot({
           {totalItems > 0 && (
             <View style={styles.totalsColumn}>
               <Text style={[styles.totalAmount, { color: colors.textOnSurface }]}>
-                Bs. {formatter.format(totalLocal)}
+                {country.currency} {formatter.format(totalLocal)}
               </Text>
               {totalUsd > 0 && (
                 <Text style={[styles.totalUsd, { color: colors.textSecondary }]}>

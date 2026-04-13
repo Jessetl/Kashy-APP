@@ -1,5 +1,6 @@
 import { AppPressable } from '@/shared/presentation/components/ui';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import {
   AlertCircle,
   ArrowDownCircle,
@@ -47,6 +48,7 @@ export const DebtCard = React.memo(
     onDelete,
   }: DebtCardProps) {
     const { colors } = useAppTheme();
+    const { country } = useCountry();
     const priority = PRIORITY_CONFIG[debt.priority];
     const overdue = isOverdue(debt.dueDate);
 
@@ -173,7 +175,7 @@ export const DebtCard = React.memo(
                 <Text
                   style={[styles.localAmount, { color: colors.textSecondary }]}
                 >
-                  Bs. {formatter.format(displayData.localAmount)}
+                  {country.currency} {formatter.format(displayData.localAmount)}
                 </Text>
               )}
             </View>

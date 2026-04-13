@@ -1,6 +1,7 @@
 import { AuthModal } from '@/modules/auth/presentation/components/auth-modal';
 import { useSessionRestore } from '@/modules/auth/presentation/hooks/use-session-restore';
 import { useAuthStore } from '@/shared/infrastructure/auth/auth.store';
+import { useCountryStore } from '@/shared/infrastructure/country/country.store';
 import { useLocationStore } from '@/shared/infrastructure/location/location.store';
 import { AppThemeProvider } from '@/shared/infrastructure/theme';
 import { usePushNotifications } from '@/shared/presentation/hooks/use-push-notifications';
@@ -29,6 +30,12 @@ function AppContent() {
   useEffect(() => {
     requestLocation();
   }, [requestLocation]);
+
+  // Restaurar país seleccionado desde storage
+  const hydrateCountry = useCountryStore((s) => s.hydrateCountry);
+  useEffect(() => {
+    void hydrateCountry();
+  }, [hydrateCountry]);
 
   return (
     <>

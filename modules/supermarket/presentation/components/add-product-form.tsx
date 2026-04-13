@@ -1,5 +1,6 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { Check, Plus, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
@@ -18,6 +19,7 @@ export const AddProductForm = React.memo(function AddProductForm({
   initialPrice,
 }: AddProductFormProps) {
   const colors = useThemeColors();
+  const { country } = useCountry();
   const [productName, setProductName] = useState(initialName ?? '');
   const [price, setPrice] = useState(initialPrice ?? '');
   const priceRef = useRef<TextInput>(null);
@@ -82,7 +84,7 @@ export const AddProductForm = React.memo(function AddProductForm({
             color: colors.textOnSurface,
           },
         ]}
-        placeholder='Bs.'
+        placeholder={country.currency}
         placeholderTextColor={colors.textTertiary}
         value={price}
         onChangeText={handlePriceChange}

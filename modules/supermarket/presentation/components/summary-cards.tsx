@@ -1,3 +1,4 @@
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -21,14 +22,15 @@ export const SummaryCards = React.memo(function SummaryCards({
   ivaEnabled,
 }: SummaryCardsProps) {
   const colors = useThemeColors();
+  const { country } = useCountry();
 
   const values = useMemo(
     () => ({
       totalUsd: `$ ${amountFormatter.format(totalUsd)}`,
       spentUsd: `$ ${amountFormatter.format(spentLocal)}`,
-      totalLocal: `Bs ${amountFormatter.format(totalLocal)}`,
+      totalLocal: `${country.currency} ${amountFormatter.format(totalLocal)}`,
     }),
-    [totalUsd, spentLocal, totalLocal],
+    [totalUsd, spentLocal, totalLocal, country.currency],
   );
 
   const cardStyles = useMemo(
@@ -84,7 +86,7 @@ export const SummaryCards = React.memo(function SummaryCards({
       {/* En Bs */}
       <View style={[styles.card, cardStyles.ves]}>
         <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>
-          En Bs
+          {country.currencyLabel}
         </Text>
         <Text
           style={[styles.cardValue, { color: colors.textOnSurface }]}

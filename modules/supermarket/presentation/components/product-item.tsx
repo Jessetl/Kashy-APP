@@ -1,5 +1,6 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { Check, Minus, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -82,6 +83,7 @@ export const ProductItem = React.memo(function ProductItem({
   onQuantityChange,
 }: ProductItemProps) {
   const colors = useThemeColors();
+  const { country } = useCountry();
 
   const safeQuantity = useMemo(
     () => Math.max(1, Math.trunc(asFiniteNumber(item.quantity, 1))),
@@ -124,25 +126,26 @@ export const ProductItem = React.memo(function ProductItem({
   }, [item.id, onQuantityChange, safeQuantity]);
 
   const displayData = useMemo(() => {
+    const sym = country.currency;
     if (hasValidExchangeRate(exchangeRate)) {
       const unitUsd = safeUnitPriceLocal / exchangeRate;
       const totalUsd = safeTotalLocal / exchangeRate;
 
       return {
         unitPriceLabel: `$${unitUsd.toFixed(2)} c/u`,
-        unitPriceBsLabel: `Bs ${safeUnitPriceLocal.toFixed(2)} c/u`,
+        unitPriceBsLabel: `${sym} ${safeUnitPriceLocal.toFixed(2)} c/u`,
         primaryTotalLabel: `$${totalUsd.toFixed(2)}`,
-        secondaryTotalLabel: `Bs ${safeTotalLocal.toFixed(0)}`,
+        secondaryTotalLabel: `${sym} ${safeTotalLocal.toFixed(0)}`,
       };
     }
 
     return {
-      unitPriceLabel: `Bs ${safeUnitPriceLocal.toFixed(2)} c/u`,
+      unitPriceLabel: `${sym} ${safeUnitPriceLocal.toFixed(2)} c/u`,
       unitPriceBsLabel: '',
-      primaryTotalLabel: `Bs ${safeTotalLocal.toFixed(2)}`,
-      secondaryTotalLabel: `Bs ${safeTotalLocal.toFixed(0)}`,
+      primaryTotalLabel: `${sym} ${safeTotalLocal.toFixed(2)}`,
+      secondaryTotalLabel: `${sym} ${safeTotalLocal.toFixed(0)}`,
     };
-  }, [exchangeRate, safeTotalLocal, safeUnitPriceLocal]);
+  }, [exchangeRate, safeTotalLocal, safeUnitPriceLocal, country.currency]);
 
   const isList = viewMode === 'list';
 
