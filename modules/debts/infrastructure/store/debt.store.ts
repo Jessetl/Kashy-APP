@@ -17,6 +17,8 @@ export type DebtTab = 'debts' | 'collections';
 
 interface DebtState {
   debts: Debt[];
+  /** Todas las deudas sin filtro de tipo — usadas para el resumen del home */
+  summaryDebts: Debt[];
   isLoading: boolean;
   error: string | null;
 
@@ -30,6 +32,8 @@ interface DebtState {
   setPriorityFilter: (priority: DebtPriority | null) => void;
   setShowPaid: (show: boolean) => void;
   loadDebts: () => Promise<void>;
+  /** Carga todas las deudas no pagadas sin filtro de tipo para calcular totales globales */
+  loadSummaryDebts: () => Promise<void>;
   createDebt: (input: CreateDebtInput) => Promise<void>;
   updateDebt: (id: string, data: UpdateDebtInput) => Promise<void>;
   deleteDebt: (id: string) => Promise<void>;
@@ -48,6 +52,7 @@ function buildFilters(state: DebtState): DebtFilters {
 
 export const useDebtStore = create<DebtState>()((set, get) => ({
   debts: [],
+  summaryDebts: [],
   isLoading: false,
   error: null,
   activeTab: 'debts',
@@ -90,6 +95,22 @@ export const useDebtStore = create<DebtState>()((set, get) => ({
     }
   },
 
+  loadSummaryDebts: async () => {
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) {
+      set({ summaryDebts: [] });
+      return;
+    }
+
+    try {
+      // Sin filtro isCollection para obtener deudas Y cobros juntos
+      const summaryDebts = await datasource.getDebts({ isPaid: false });
+      set({ summaryDebts });
+    } catch (err) {
+      // Silencioso — no bloquea la UI principal
+    }
+  },
+
   createDebt: async (input) => {
     try {
       set({ isLoading: true, error: null });
@@ -108,6 +129,7 @@ export const useDebtStore = create<DebtState>()((set, get) => ({
 
       set((state) => ({
         debts: [debtWithInterest, ...state.debts],
+        summaryDebts: [debtWithInterest, ...state.summaryDebts],
         isLoading: false,
       }));
     } catch (err) {
@@ -125,6 +147,7 @@ export const useDebtStore = create<DebtState>()((set, get) => ({
 
       set((state) => ({
         debts: state.debts.map((d) => (d.id === id ? updated : d)),
+        summaryDebts: state.summaryDebts.map((d) => (d.id === id ? updated : d)),
       }));
     } catch (err) {
       const message =
@@ -141,6 +164,7 @@ export const useDebtStore = create<DebtState>()((set, get) => ({
 
       set((state) => ({
         debts: state.debts.filter((d) => d.id !== id),
+        summaryDebts: state.summaryDebts.filter((d) => d.id !== id),
       }));
     } catch (err) {
       const message =
@@ -157,6 +181,7 @@ export const useDebtStore = create<DebtState>()((set, get) => ({
 
       set((state) => ({
         debts: state.debts.map((d) => (d.id === id ? updated : d)),
+        summaryDebts: state.summaryDebts.map((d) => (d.id === id ? updated : d)),
       }));
     } catch (err) {
       const message =
@@ -169,6 +194,7 @@ export const useDebtStore = create<DebtState>()((set, get) => ({
   resetStore: () => {
     set({
       debts: [],
+      summaryDebts: [],
       isLoading: false,
       error: null,
       activeTab: 'debts',

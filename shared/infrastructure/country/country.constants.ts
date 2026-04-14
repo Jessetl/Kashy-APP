@@ -11,8 +11,8 @@ export const COUNTRIES = [
     code: 'AR',
     name: 'Argentina',
     flag: '🇦🇷',
-    currency: 'AR',
-    currencyLabel: 'En AR',
+    currency: 'ARS',
+    currencyLabel: 'En ARS',
     locale: 'es-AR',
   },
   {

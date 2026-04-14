@@ -40,20 +40,20 @@ export function useHomeSummary(): HomeSummary {
   const didInit = useRef(false);
 
   // Debt store selectors
-  const allDebts = useDebtStore((s) => s.debts);
-  const loadDebts = useDebtStore((s) => s.loadDebts);
+  const allDebts = useDebtStore((s) => s.summaryDebts);
+  const loadSummaryDebts = useDebtStore((s) => s.loadSummaryDebts);
 
   // Shopping store selectors
   const activeList = useShoppingListStore((s) => s.activeList);
 
-  // Load debts on mount (all, no filter)
+  // Load all debts (both types) on mount for accurate summary totals
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
     if (isAuthenticated) {
-      void loadDebts();
+      void loadSummaryDebts();
     }
-  }, [isAuthenticated, loadDebts]);
+  }, [isAuthenticated, loadSummaryDebts]);
 
   // User info
   const displayName = (isAuthenticated && user?.firstName) || 'Invitado';
@@ -97,9 +97,9 @@ export function useHomeSummary(): HomeSummary {
   const reload = useCallback(() => {
     void reloadRate();
     if (isAuthenticated) {
-      void loadDebts();
+      void loadSummaryDebts();
     }
-  }, [reloadRate, isAuthenticated, loadDebts]);
+  }, [reloadRate, isAuthenticated, loadSummaryDebts]);
 
   return {
     isAuthenticated,

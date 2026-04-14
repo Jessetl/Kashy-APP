@@ -1,18 +1,24 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 interface ListSettingsRowProps {
   ivaEnabled: boolean;
   onToggleIva: () => void;
+  priceInLocal: boolean;
+  onTogglePriceInLocal: () => void;
 }
 
 export const ListSettingsRow = React.memo(function ListSettingsRow({
   ivaEnabled,
   onToggleIva,
+  priceInLocal,
+  onTogglePriceInLocal,
 }: ListSettingsRowProps) {
   const colors = useThemeColors();
+  const { country } = useCountry();
 
   return (
     <View style={styles.container}>
@@ -55,6 +61,48 @@ export const ListSettingsRow = React.memo(function ListSettingsRow({
           ]}
         >
           IVA 16%
+        </Text>
+      </AppPressable>
+
+      <AppPressable
+        onPress={onTogglePriceInLocal}
+        style={[
+          styles.toggle,
+          {
+            backgroundColor: priceInLocal
+              ? colors.primaryLight
+              : colors.backgroundTertiary,
+            borderColor: priceInLocal ? colors.primary : colors.textSecondary,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.radio,
+            {
+              borderColor: priceInLocal ? colors.primary : colors.textSecondary,
+              backgroundColor: priceInLocal ? colors.primary : 'transparent',
+            },
+          ]}
+        >
+          {priceInLocal && (
+            <View
+              style={[
+                styles.radioInner,
+                { backgroundColor: colors.textInverse },
+              ]}
+            />
+          )}
+        </View>
+        <Text
+          style={[
+            styles.toggleLabel,
+            {
+              color: priceInLocal ? colors.primary : colors.textSecondary,
+            },
+          ]}
+        >
+          Precio en {country.currency}
         </Text>
       </AppPressable>
     </View>

@@ -4,6 +4,7 @@ import {
   Beef,
   CupSoda,
   Ellipsis,
+  ShoppingBasket,
   ShowerHead,
   SprayCan,
   Utensils,
@@ -11,19 +12,20 @@ import {
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-
-const ITEMS_LAYOUT = LinearTransition.duration(300);
 import {
   PRODUCT_CATEGORIES,
   type ShoppingItem,
 } from '../../domain/entities/shopping-list.entity';
 import { ProductItem } from './product-item';
 
+const ITEMS_LAYOUT = LinearTransition.duration(300);
+
 const ICON_MAP: Record<
   string,
   React.ComponentType<{ size: number; color: string }>
 > = {
   utensils: Utensils,
+  'shopping-basket': ShoppingBasket,
   apple: Apple,
   beef: Beef,
   'cup-soda': CupSoda,

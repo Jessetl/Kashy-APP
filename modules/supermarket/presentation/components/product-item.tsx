@@ -1,6 +1,7 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import { useCountry } from '@/shared/presentation/hooks/use-country';
+import { formatLocalAmount, formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import { Check, Minus, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -126,26 +127,25 @@ export const ProductItem = React.memo(function ProductItem({
   }, [item.id, onQuantityChange, safeQuantity]);
 
   const displayData = useMemo(() => {
-    const sym = country.currency;
     if (hasValidExchangeRate(exchangeRate)) {
       const unitUsd = safeUnitPriceLocal / exchangeRate;
       const totalUsd = safeTotalLocal / exchangeRate;
 
       return {
-        unitPriceLabel: `$${unitUsd.toFixed(2)} c/u`,
-        unitPriceBsLabel: `${sym} ${safeUnitPriceLocal.toFixed(2)} c/u`,
-        primaryTotalLabel: `$${totalUsd.toFixed(2)}`,
-        secondaryTotalLabel: `${sym} ${safeTotalLocal.toFixed(0)}`,
+        unitPriceLabel: `${formatUsdAmount(unitUsd)} c/u`,
+        unitPriceBsLabel: `${formatLocalAmount(safeUnitPriceLocal, country)} c/u`,
+        primaryTotalLabel: formatUsdAmount(totalUsd),
+        secondaryTotalLabel: formatLocalAmount(safeTotalLocal, country),
       };
     }
 
     return {
-      unitPriceLabel: `${sym} ${safeUnitPriceLocal.toFixed(2)} c/u`,
+      unitPriceLabel: `${formatLocalAmount(safeUnitPriceLocal, country)} c/u`,
       unitPriceBsLabel: '',
-      primaryTotalLabel: `${sym} ${safeTotalLocal.toFixed(2)}`,
-      secondaryTotalLabel: `${sym} ${safeTotalLocal.toFixed(0)}`,
+      primaryTotalLabel: formatLocalAmount(safeTotalLocal, country),
+      secondaryTotalLabel: '',
     };
-  }, [exchangeRate, safeTotalLocal, safeUnitPriceLocal, country.currency]);
+  }, [exchangeRate, safeTotalLocal, safeUnitPriceLocal, country]);
 
   const isList = viewMode === 'list';
 

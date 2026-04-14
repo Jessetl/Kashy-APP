@@ -34,7 +34,7 @@ export interface PushNotificationState {
  */
 export async function requestNotificationPermissions(): Promise<PushPermissionStatus> {
   if (!Device.isDevice) {
-    console.warn('[Push] Las notificaciones push no funcionan en emulador');
+    // Silencioso en emulador — no es un error real, solo una limitación del entorno
     return 'denied';
   }
 

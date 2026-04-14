@@ -2,6 +2,7 @@ import { COUNTRIES } from '@/shared/infrastructure/country/country.constants';
 import { useCountryStore } from '@/shared/infrastructure/country/country.store';
 import { AppPressable } from '@/shared/presentation/components/ui';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { formatLocalAmount } from '@/shared/presentation/utils/format-currency';
 import { ArrowUpDown, ChevronDown } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
@@ -18,11 +19,6 @@ interface ExchangeRateBannerProps {
   source: string | null;
   isLoading: boolean;
 }
-
-const formatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export const ExchangeRateBanner = React.memo(function ExchangeRateBanner({
   rate,
@@ -59,7 +55,7 @@ export const ExchangeRateBanner = React.memo(function ExchangeRateBanner({
             <ActivityIndicator size='small' color={colors.primary} />
           ) : (
             <Text style={[styles.rate, { color: colors.text }]}>
-              {country.currency} {rate ? formatter.format(rate) : '--'}{' '}
+              {rate ? formatLocalAmount(rate, country) : '--'}{' '}
               <Text style={[styles.perUsd, { color: 'rgba(255,255,255,0.6)' }]}>
                 / USD
               </Text>

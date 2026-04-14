@@ -1,4 +1,5 @@
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -6,11 +7,6 @@ interface DebtSummaryCardsProps {
   totalDebts: number;
   totalCollections: number;
 }
-
-const formatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export const DebtSummaryCards = React.memo(function DebtSummaryCards({
   totalDebts,
@@ -42,7 +38,7 @@ export const DebtSummaryCards = React.memo(function DebtSummaryCards({
           adjustsFontSizeToFit
           minimumFontScale={0.58}
         >
-          ${formatter.format(totalDebts)}
+          {formatUsdAmount(totalDebts)}
         </Text>
       </View>
 
@@ -61,7 +57,7 @@ export const DebtSummaryCards = React.memo(function DebtSummaryCards({
           adjustsFontSizeToFit
           minimumFontScale={0.58}
         >
-          ${formatter.format(totalCollections)}
+          {formatUsdAmount(totalCollections)}
         </Text>
       </View>
 
@@ -78,7 +74,7 @@ export const DebtSummaryCards = React.memo(function DebtSummaryCards({
           adjustsFontSizeToFit
           minimumFontScale={0.58}
         >
-          ${formatter.format(Math.abs(balance))}
+          {formatUsdAmount(Math.abs(balance))}
         </Text>
       </View>
     </View>

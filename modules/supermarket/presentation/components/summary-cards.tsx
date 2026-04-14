@@ -1,12 +1,8 @@
 import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
+import { formatLocalAmount, formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-
-const amountFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 interface SummaryCardsProps {
   totalLocal: number;
@@ -26,11 +22,11 @@ export const SummaryCards = React.memo(function SummaryCards({
 
   const values = useMemo(
     () => ({
-      totalUsd: `$ ${amountFormatter.format(totalUsd)}`,
-      spentUsd: `$ ${amountFormatter.format(spentLocal)}`,
-      totalLocal: `${country.currency} ${amountFormatter.format(totalLocal)}`,
+      totalUsd: formatUsdAmount(totalUsd),
+      spentUsd: formatUsdAmount(spentLocal),
+      totalLocal: formatLocalAmount(totalLocal, country),
     }),
-    [totalUsd, spentLocal, totalLocal, country.currency],
+    [totalUsd, spentLocal, totalLocal, country],
   );
 
   const cardStyles = useMemo(

@@ -2,6 +2,7 @@ import {
   AppCalendarInput,
   AppPressable,
 } from '@/shared/presentation/components/ui';
+import { formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import { ErrorBanner } from '@/shared/presentation/components/ui/error-banner';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
 import {
@@ -46,11 +47,6 @@ const PRIORITIES: {
   { key: 'MEDIUM', label: 'Media', color: '#FFB84D', Icon: MinusCircle },
   { key: 'LOW', label: 'Baja', color: '#63E696', Icon: ArrowDownCircle },
 ];
-
-const formatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export const DebtForm = React.memo(function DebtForm({
   editingDebt,
@@ -354,7 +350,7 @@ export const DebtForm = React.memo(function DebtForm({
                       Interés
                     </Text>
                     <Text style={[styles.interestValue, { color: colors.warning }]}>
-                      +${formatter.format(interestAmount)}
+                      +{formatUsdAmount(interestAmount)}
                     </Text>
                   </View>
                   <View style={[styles.interestSeparator, { backgroundColor: colors.warning, opacity: 0.2 }]} />
@@ -363,7 +359,7 @@ export const DebtForm = React.memo(function DebtForm({
                       Total
                     </Text>
                     <Text style={[styles.interestTotal, { color: colors.textOnSurface }]}>
-                      ${formatter.format(totalWithInterest)}
+                      {formatUsdAmount(totalWithInterest)}
                     </Text>
                   </View>
                 </Animated.View>

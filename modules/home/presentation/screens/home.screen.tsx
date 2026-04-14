@@ -1,7 +1,9 @@
+import { useNotifications } from '@/modules/notifications/presentation/hooks/use-notifications';
 import { NotificationButton } from '@/shared/presentation/components/notification-button';
 import { ThemeToggle } from '@/shared/presentation/components/theme-toggle';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
-import React from 'react';
+import { useRouter } from 'expo-router';
+import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ExchangeRateBanner } from '../components/exchange-rate-banner';
@@ -15,8 +17,14 @@ import { useHomeSummary } from '../hooks/use-home-summary';
 export default function HomeScreen() {
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const summary = useHomeSummary();
+  const { unreadCount } = useNotifications();
+
+  const handleOpenNotifications = useCallback(() => {
+    router.push('/notifications');
+  }, [router]);
 
   return (
     <View style={[styles.flex, { paddingTop: insets.top }]}>
@@ -53,9 +61,8 @@ export default function HomeScreen() {
           </View>
           <View style={styles.topBarRight}>
             <NotificationButton
-              badgeCount={
-                summary.isAuthenticated ? summary.overdueCount : 0
-              }
+              badgeCount={summary.isAuthenticated ? unreadCount : 0}
+              onPress={handleOpenNotifications}
             />
             <ThemeToggle />
           </View>

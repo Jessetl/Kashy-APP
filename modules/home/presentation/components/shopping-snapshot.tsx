@@ -1,6 +1,7 @@
 import { AppPressable } from '@/shared/presentation/components/ui';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
 import { useCountry } from '@/shared/presentation/hooks/use-country';
+import { formatLocalAmount, formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import { useRouter } from 'expo-router';
 import { ArrowRight, ShoppingBag } from 'lucide-react-native';
 import React, { useCallback } from 'react';
@@ -13,11 +14,6 @@ interface ShoppingSnapshotProps {
   totalLocal: number;
   exchangeRate: number | null;
 }
-
-const formatter = new Intl.NumberFormat('es-VE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 
 export const ShoppingSnapshot = React.memo(function ShoppingSnapshot({
   listName,
@@ -72,11 +68,11 @@ export const ShoppingSnapshot = React.memo(function ShoppingSnapshot({
           {totalItems > 0 && (
             <View style={styles.totalsColumn}>
               <Text style={[styles.totalAmount, { color: colors.textOnSurface }]}>
-                {country.currency} {formatter.format(totalLocal)}
+                {formatLocalAmount(totalLocal, country)}
               </Text>
               {totalUsd > 0 && (
                 <Text style={[styles.totalUsd, { color: colors.textSecondary }]}>
-                  ${formatter.format(totalUsd)}
+                  {formatUsdAmount(totalUsd)}
                 </Text>
               )}
             </View>

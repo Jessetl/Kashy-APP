@@ -1,8 +1,7 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
-import { Bookmark } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 interface SaveListFormProps {
   onSave: (name: string, storeName: string) => void;
@@ -22,9 +21,7 @@ export const SaveListForm = React.memo(function SaveListForm({
   const handleSave = useCallback(() => {
     const trimmedName = listName.trim();
     const trimmedStore = storeName.trim();
-
     if (!trimmedName) return;
-
     onSave(trimmedName, trimmedStore);
   }, [listName, storeName, onSave]);
 
@@ -32,42 +29,40 @@ export const SaveListForm = React.memo(function SaveListForm({
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputsColumn}>
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              color: colors.textOnSurface,
-            },
-          ]}
-          placeholder='Nombre de la lista'
-          placeholderTextColor={colors.textTertiary}
-          value={listName}
-          onChangeText={setListName}
-          autoCorrect={false}
-          autoCapitalize='sentences'
-          returnKeyType='next'
-          autoFocus
-        />
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              color: colors.textOnSurface,
-            },
-          ]}
-          placeholder='Establecimiento'
-          placeholderTextColor={colors.textTertiary}
-          value={storeName}
-          onChangeText={setStoreName}
-          autoCorrect={false}
-          autoCapitalize='sentences'
-          returnKeyType='done'
-          onSubmitEditing={handleSave}
-        />
-      </View>
+      <TextInput
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.backgroundTertiary,
+            color: colors.textOnSurface,
+          },
+        ]}
+        placeholder='Nombre de la lista'
+        placeholderTextColor={colors.textTertiary}
+        value={listName}
+        onChangeText={setListName}
+        autoCorrect={false}
+        autoCapitalize='sentences'
+        returnKeyType='next'
+        autoFocus
+      />
+      <TextInput
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.backgroundTertiary,
+            color: colors.textOnSurface,
+          },
+        ]}
+        placeholder='Establecimiento (opcional)'
+        placeholderTextColor={colors.textTertiary}
+        value={storeName}
+        onChangeText={setStoreName}
+        autoCorrect={false}
+        autoCapitalize='sentences'
+        returnKeyType='done'
+        onSubmitEditing={handleSave}
+      />
       <AppPressable
         onPress={handleSave}
         disabled={!isValid}
@@ -80,10 +75,16 @@ export const SaveListForm = React.memo(function SaveListForm({
           },
         ]}
       >
-        <Bookmark
-          size={26}
-          color={isValid ? colors.textInverse : colors.textTertiary}
-        />
+        <Text
+          style={[
+            styles.saveButtonText,
+            {
+              color: isValid ? colors.textInverse : colors.textTertiary,
+            },
+          ]}
+        >
+          Guardar
+        </Text>
       </AppPressable>
     </View>
   );
@@ -91,13 +92,7 @@ export const SaveListForm = React.memo(function SaveListForm({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 10,
-  },
-  inputsColumn: {
-    flex: 1,
-    gap: 8,
   },
   input: {
     height: 46,
@@ -107,10 +102,15 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   saveButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
+  },
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

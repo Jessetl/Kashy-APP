@@ -5,6 +5,7 @@ import {
   Beef,
   CupSoda,
   Ellipsis,
+  ShoppingBasket,
   ShowerHead,
   SprayCan,
   Utensils,
@@ -26,6 +27,7 @@ const ICON_MAP: Record<
   React.ComponentType<{ pointerEvents: 'none'; size: number; color: string }>
 > = {
   utensils: Utensils,
+  'shopping-basket': ShoppingBasket,
   apple: Apple,
   beef: Beef,
   'cup-soda': CupSoda,

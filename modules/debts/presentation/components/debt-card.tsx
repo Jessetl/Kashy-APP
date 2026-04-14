@@ -32,10 +32,7 @@ const PRIORITY_CONFIG: Record<
   LOW: { color: '#63E696', Icon: ArrowDownCircle },
 };
 
-const formatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+import { formatLocalAmount, formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 
 const LAYOUT_TRANSITION = LinearTransition.duration(300);
 
@@ -162,7 +159,7 @@ export const DebtCard = React.memo(
           <View style={styles.footer}>
             <View style={styles.amountContainer}>
               <Text style={[styles.amount, { color: colors.textOnSurface }]}>
-                ${formatter.format(displayData.total)}
+                {formatUsdAmount(displayData.total)}
               </Text>
               {debt.interestRatePct > 0 && (
                 <Text
@@ -175,7 +172,7 @@ export const DebtCard = React.memo(
                 <Text
                   style={[styles.localAmount, { color: colors.textSecondary }]}
                 >
-                  {country.currency} {formatter.format(displayData.localAmount)}
+                  {formatLocalAmount(displayData.localAmount, country)}
                 </Text>
               )}
             </View>

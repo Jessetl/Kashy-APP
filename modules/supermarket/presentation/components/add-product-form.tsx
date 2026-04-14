@@ -1,4 +1,5 @@
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
+import { useExchangeRate } from '@/modules/shared-services/exchange-rate/presentation/use-exchange-rate';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import { useCountry } from '@/shared/presentation/hooks/use-country';
 import { Check, Plus, X } from 'lucide-react-native';
@@ -10,6 +11,7 @@ interface AddProductFormProps {
   onCancelEdit?: () => void;
   initialName?: string;
   initialPrice?: string;
+  priceInLocal?: boolean;
 }
 
 export const AddProductForm = React.memo(function AddProductForm({
@@ -17,9 +19,11 @@ export const AddProductForm = React.memo(function AddProductForm({
   onCancelEdit,
   initialName,
   initialPrice,
+  priceInLocal = false,
 }: AddProductFormProps) {
   const colors = useThemeColors();
   const { country } = useCountry();
+  const { usdToLocal } = useExchangeRate();
   const [productName, setProductName] = useState(initialName ?? '');
   const [price, setPrice] = useState(initialPrice ?? '');
   const priceRef = useRef<TextInput>(null);
@@ -31,6 +35,11 @@ export const AddProductForm = React.memo(function AddProductForm({
     setPrice(initialPrice ?? '');
   }, [initialName, initialPrice]);
 
+  // Clear price when currency mode changes
+  useEffect(() => {
+    setPrice('');
+  }, [priceInLocal]);
+
   const handleAdd = useCallback(() => {
     const trimmedName = productName.trim();
     const numPrice = parseFloat(price.replace(',', '.'));
@@ -39,10 +48,14 @@ export const AddProductForm = React.memo(function AddProductForm({
       return;
     }
 
-    onAdd(trimmedName, numPrice);
+    const localPrice = priceInLocal ? numPrice : usdToLocal(numPrice);
+
+    if (localPrice <= 0) return;
+
+    onAdd(trimmedName, localPrice);
     setProductName('');
     setPrice('');
-  }, [productName, price, onAdd]);
+  }, [productName, price, priceInLocal, usdToLocal, onAdd]);
 
   const handlePriceChange = useCallback((text: string) => {
     const cleaned = text.replace(/[^0-9.,]/g, '');
@@ -53,6 +66,8 @@ export const AddProductForm = React.memo(function AddProductForm({
     productName.trim().length > 0 &&
     price.length > 0 &&
     parseFloat(price.replace(',', '.')) > 0;
+
+  const pricePlaceholder = priceInLocal ? country.currency : 'USD';
 
   return (
     <View style={styles.container}>
@@ -84,7 +99,7 @@ export const AddProductForm = React.memo(function AddProductForm({
             color: colors.textOnSurface,
           },
         ]}
-        placeholder={country.currency}
+        placeholder={pricePlaceholder}
         placeholderTextColor={colors.textTertiary}
         value={price}
         onChangeText={handlePriceChange}

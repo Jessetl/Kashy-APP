@@ -1,7 +1,8 @@
 import { AppPressable } from '@/shared/presentation/components/ui';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import { useRouter } from 'expo-router';
-import { ArrowRight, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { ArrowRight, CheckCircle2, TrendingDown, TrendingUp } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -12,11 +13,6 @@ interface FinanceOverviewProps {
   overdueCount: number;
 }
 
-const formatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 export const FinanceOverview = React.memo(function FinanceOverview({
   totalDebts,
   totalCollections,
@@ -26,8 +22,25 @@ export const FinanceOverview = React.memo(function FinanceOverview({
   const { colors } = useAppTheme();
   const router = useRouter();
 
-  const balanceColor = balance >= 0 ? colors.success : colors.danger;
-  const BalanceIcon = balance >= 0 ? TrendingUp : TrendingDown;
+  const isBalanced = balance === 0;
+  const balanceColor = isBalanced
+    ? colors.success
+    : balance > 0
+      ? colors.success
+      : colors.danger;
+  const BalanceIcon = isBalanced
+    ? CheckCircle2
+    : balance > 0
+      ? TrendingUp
+      : TrendingDown;
+  const hasNoActivity = totalDebts === 0 && totalCollections === 0;
+  const balanceHint = isBalanced
+    ? hasNoActivity
+      ? 'Todo en orden, no debes nada'
+      : 'Todo al día, estás cuadrado'
+    : balance > 0
+      ? 'Te deben mas de lo que debes'
+      : 'Debes mas de lo que te deben';
 
   const handleNavigate = useCallback(() => {
     router.push('/(tabs)/debts');
@@ -61,11 +74,11 @@ export const FinanceOverview = React.memo(function FinanceOverview({
               adjustsFontSizeToFit
               minimumFontScale={0.6}
             >
-              ${formatter.format(Math.abs(balance))}
+              {formatUsdAmount(Math.abs(balance))}
             </Text>
           </View>
           <Text style={[styles.balanceHint, { color: balanceColor }]}>
-            {balance >= 0 ? 'Te deben mas de lo que debes' : 'Debes mas de lo que te deben'}
+            {balanceHint}
           </Text>
         </View>
         {overdueCount > 0 && (
@@ -97,7 +110,7 @@ export const FinanceOverview = React.memo(function FinanceOverview({
             adjustsFontSizeToFit
             minimumFontScale={0.6}
           >
-            ${formatter.format(totalDebts)}
+            {formatUsdAmount(totalDebts)}
           </Text>
         </View>
         <View
@@ -115,7 +128,7 @@ export const FinanceOverview = React.memo(function FinanceOverview({
             adjustsFontSizeToFit
             minimumFontScale={0.6}
           >
-            ${formatter.format(totalCollections)}
+            {formatUsdAmount(totalCollections)}
           </Text>
         </View>
       </View>

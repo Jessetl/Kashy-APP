@@ -1,8 +1,11 @@
 import { useExchangeRate } from '@/modules/shared-services/exchange-rate/presentation/use-exchange-rate';
 import { ParallaxScrollView } from '@/shared/presentation/components/parallax-scroll-view';
 import { BottomSheetModal } from '@/shared/presentation/components/ui/bottom-sheet-modal';
+import { DialogModal } from '@/shared/presentation/components/ui/dialog-modal';
 import { useAuth } from '@/shared/presentation/hooks/auth/use-auth';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
+import { useCountry } from '@/shared/presentation/hooks/use-country';
+import { formatLocalAmount, formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import React, {
   useCallback,
   useEffect,
@@ -43,6 +46,7 @@ const LIST_HEADER_BAR_HEIGHT = 48;
 
 export default function SupermarketScreen() {
   const { colors } = useAppTheme();
+  const { country } = useCountry();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { isAuthenticated, openLoginModal } = useAuth();
@@ -70,6 +74,7 @@ export default function SupermarketScreen() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showSavedListsModal, setShowSavedListsModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [priceInLocal, setPriceInLocal] = useState(false);
 
   const didInit = useRef(false);
 
@@ -186,6 +191,10 @@ export default function SupermarketScreen() {
     void updateListSettings({ ivaEnabled: !activeList?.ivaEnabled });
   }, [updateListSettings, activeList?.ivaEnabled]);
 
+  const handleTogglePriceInLocal = useCallback(() => {
+    setPriceInLocal((prev) => !prev);
+  }, []);
+
   const handleSave = useCallback(() => {
     if (!isAuthenticated) {
       openLoginModal(() => setShowSaveModal(true));
@@ -266,6 +275,7 @@ export default function SupermarketScreen() {
 
     const CATEGORY_LABELS: Record<string, string> = {
       COMIDA: '🍽 Comida',
+      VIVERES: '🧺 Víveres',
       FRUTAS: '🍎 Frutas',
       CARNES: '🥩 Carnes',
       BEBIDAS: '🥤 Bebidas',
@@ -274,8 +284,8 @@ export default function SupermarketScreen() {
       OTROS: '📦 Otros',
     };
 
-    const fmtBs  = (n: number) => `Bs ${n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
+    const fmtBs  = (n: number) => formatLocalAmount(n, country);
+    const fmtUsd = (n: number) => formatUsdAmount(n);
 
     const lines: string[] = [];
 
@@ -352,7 +362,8 @@ export default function SupermarketScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
     >
       <View style={[styles.flex, { paddingTop: insets.top }]}>
         <ListHeaderBar
@@ -394,6 +405,8 @@ export default function SupermarketScreen() {
               <ListSettingsRow
                 ivaEnabled={activeList?.ivaEnabled ?? false}
                 onToggleIva={handleToggleIva}
+                priceInLocal={priceInLocal}
+                onTogglePriceInLocal={handleTogglePriceInLocal}
               />
               <SummaryCards
                 totalLocal={totalLocal}
@@ -448,42 +461,38 @@ export default function SupermarketScreen() {
             onCancelEdit={handleCancelEdit}
             initialName={editingItem?.productName}
             initialPrice={editingItem?.unitPriceLocal?.toString()}
+            priceInLocal={priceInLocal}
           />
         </View>
         {/* Save list modal */}
-        <BottomSheetModal
+        <DialogModal
           visible={showSaveModal}
           onClose={() => setShowSaveModal(false)}
-          heightRatio={0.35}
+          title='Guardar lista'
         >
-          <View style={styles.modalContent}>
-            <Text style={[styles.modalTitle, { color: colors.textOnSurface }]}>
-              Guardar lista
-            </Text>
-            <SaveListForm
-              onSave={handleSaveList}
-              initialName={activeList?.name}
-              initialStoreName={activeList?.storeName ?? undefined}
-            />
-          </View>
-        </BottomSheetModal>
+          <SaveListForm
+            onSave={handleSaveList}
+            initialName={activeList?.name}
+            initialStoreName={activeList?.storeName ?? undefined}
+          />
+        </DialogModal>
         {/* Saved lists modal */}
         <BottomSheetModal
           visible={showSavedListsModal}
           onClose={() => setShowSavedListsModal(false)}
-          heightRatio={0.6}
+          heightRatio={0.75}
         >
-          <View style={[styles.modalContent, styles.flex]}>
-            <Text style={[styles.modalTitle, { color: colors.textOnSurface }]}>
+          <View style={styles.sheetHeader}>
+            <Text style={[styles.sheetTitle, { color: colors.text }]}>
               Mis listas
             </Text>
-            <SavedListsSheet
-              lists={savedLists}
-              activeListId={activeList?.id ?? null}
-              isLoading={isLoading}
-              onSelect={handleSelectSavedList}
-            />
           </View>
+          <SavedListsSheet
+            lists={savedLists}
+            activeListId={activeList?.id ?? null}
+            isLoading={isLoading}
+            onSelect={handleSelectSavedList}
+          />
         </BottomSheetModal>
       </View>
     </KeyboardAvoidingView>
@@ -551,12 +560,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  modalContent: {
-    gap: 16,
-    paddingTop: 8,
+  sheetHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 12,
   },
-  modalTitle: {
+  sheetTitle: {
     fontSize: 18,
     fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });

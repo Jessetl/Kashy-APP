@@ -1,4 +1,5 @@
 import { useExchangeRate } from '@/modules/shared-services/exchange-rate/presentation/use-exchange-rate';
+import { formatLocalAmount, formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 import {
   AppPressable,
   BottomSheetModal,
@@ -29,10 +30,6 @@ import { useDebtStore } from '../../infrastructure/store/debt.store';
 import { DebtForm } from '../components/debt-form';
 
 const datasource = new DebtDatasource();
-
-const formatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 2,
-});
 
 const PRIORITY_CONFIG: Record<
   DebtPriority,
@@ -245,7 +242,7 @@ export default function DebtDetailScreen() {
             Monto total
           </Text>
           <Text style={[styles.amountValue, { color: colors.textOnSurface }]}>
-            ${formatter.format(total)}
+            {formatUsdAmount(total)}
           </Text>
 
           {debt.interestRatePct > 0 && (
@@ -253,11 +250,11 @@ export default function DebtDetailScreen() {
               <Text
                 style={[styles.interestDetail, { color: colors.textSecondary }]}
               >
-                Capital: ${formatter.format(debt.amountUsd)}
+                Capital: {formatUsdAmount(debt.amountUsd)}
               </Text>
               <Text style={[styles.interestDetail, { color: colors.warning }]}>
                 Interés ({debt.interestRatePct}%): $
-                {formatter.format(debt.interestAmountUsd)}
+                {formatUsdAmount(debt.interestAmountUsd)}
               </Text>
             </View>
           )}
@@ -274,7 +271,7 @@ export default function DebtDetailScreen() {
               <Text
                 style={[styles.localValue, { color: colors.textOnSurface }]}
               >
-                {country.currency} {formatter.format(localAmount)}
+                {formatLocalAmount(localAmount, country)}
               </Text>
             </View>
           )}

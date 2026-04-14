@@ -45,6 +45,10 @@ function AppContent() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name='(tabs)' />
+        <Stack.Screen
+          name='notifications'
+          options={{ animation: 'slide_from_right' }}
+        />
       </Stack>
       <AuthModalGlobal />
     </>

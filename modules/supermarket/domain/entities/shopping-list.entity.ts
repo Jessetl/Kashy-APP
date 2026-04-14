@@ -55,6 +55,7 @@ export const PRODUCT_CATEGORIES = [
   { key: 'BEBIDAS', label: 'Bebidas', icon: 'cup-soda' },
   { key: 'LIMPIEZA', label: 'Limpieza', icon: 'spray-can' },
   { key: 'HIGIENE', label: 'Higiene', icon: 'shower-head' },
+  { key: 'VIVERES', label: 'Víveres', icon: 'shopping-basket' },
   { key: 'OTROS', label: 'Otros', icon: 'ellipsis' },
 ] as const;
 

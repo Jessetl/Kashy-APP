@@ -23,10 +23,7 @@ const PRIORITY_ICONS: Record<DebtPriority, typeof AlertCircle> = {
   LOW: ArrowDownCircle,
 };
 
-const formatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+import { formatUsdAmount } from '@/shared/presentation/utils/format-currency';
 
 export const UpcomingDebts = React.memo(function UpcomingDebts({
   debts,
@@ -104,7 +101,7 @@ export const UpcomingDebts = React.memo(function UpcomingDebts({
               </View>
               <View style={styles.itemRight}>
                 <Text style={[styles.itemAmount, { color: colors.textOnSurface }]}>
-                  ${formatter.format(total)}
+                  {formatUsdAmount(total)}
                 </Text>
                 <Text style={[styles.itemType, { color: debt.isCollection ? colors.success : colors.danger }]}>
                   {debt.isCollection ? 'Cobro' : 'Deuda'}

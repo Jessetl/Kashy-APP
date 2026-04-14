@@ -9,6 +9,7 @@ export function useDebts() {
   const didInit = useRef(false);
 
   const debts = useDebtStore((s) => s.debts);
+  const summaryDebts = useDebtStore((s) => s.summaryDebts);
   const isLoading = useDebtStore((s) => s.isLoading);
   const error = useDebtStore((s) => s.error);
   const activeTab = useDebtStore((s) => s.activeTab);
@@ -19,6 +20,7 @@ export function useDebts() {
   const setPriorityFilter = useDebtStore((s) => s.setPriorityFilter);
   const setShowPaid = useDebtStore((s) => s.setShowPaid);
   const loadDebts = useDebtStore((s) => s.loadDebts);
+  const loadSummaryDebts = useDebtStore((s) => s.loadSummaryDebts);
   const markAsPaid = useDebtStore((s) => s.markAsPaid);
   const deleteDebt = useDebtStore((s) => s.deleteDebt);
   const clearError = useDebtStore((s) => s.clearError);
@@ -29,14 +31,16 @@ export function useDebts() {
 
     if (isAuthenticated) {
       void loadDebts();
+      void loadSummaryDebts();
     }
-  }, [isAuthenticated, loadDebts]);
+  }, [isAuthenticated, loadDebts, loadSummaryDebts]);
 
   useEffect(() => {
     if (didInit.current && isAuthenticated) {
       void loadDebts();
+      void loadSummaryDebts();
     }
-  }, [isAuthenticated, loadDebts]);
+  }, [isAuthenticated, loadDebts, loadSummaryDebts]);
 
   const requireAuth = useCallback(
     (action: () => void) => {
@@ -106,16 +110,17 @@ export function useDebts() {
     [setPriorityFilter],
   );
 
-  // Calcular resúmenes
-  const totalDebts = debts
+  // Resúmenes globales — se calculan sobre summaryDebts (array sin filtro de tipo),
+  // para que las cards "Por pagar" y "Por cobrar" muestren ambos totales
+  // independientemente del tab activo.
+  const totalDebts = summaryDebts
     .filter((d) => !d.isCollection && !d.isPaid)
     .reduce((sum, d) => sum + d.amountUsd + d.interestAmountUsd, 0);
 
-  const totalCollections = debts
+  const totalCollections = summaryDebts
     .filter((d) => d.isCollection && !d.isPaid)
     .reduce((sum, d) => sum + d.amountUsd + d.interestAmountUsd, 0);
 
-  // Resúmenes globales (no filtrados por tab)
   const summary = { totalDebts, totalCollections };
 
   return {
@@ -133,7 +138,9 @@ export function useDebts() {
     setShowPaid,
     markAsPaid: handleMarkAsPaid,
     deleteDebt: handleDelete,
-    reload: loadDebts,
+    reload: useCallback(async () => {
+      await Promise.all([loadDebts(), loadSummaryDebts()]);
+    }, [loadDebts, loadSummaryDebts]),
     clearError,
     requireAuth,
   };
