@@ -9,6 +9,5 @@ export async function fetchCurrentRate(
     skipAuth: true,
     headers: { 'X-Currency': countryCode },
   });
-  console.log('Exchange rate response:', response.data);
   return response.data;
 }

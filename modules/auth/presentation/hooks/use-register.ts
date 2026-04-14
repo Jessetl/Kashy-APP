@@ -1,4 +1,9 @@
 import { ApiHttpError } from '@/shared/infrastructure/api';
+import {
+  DEFAULT_COUNTRY_CODE,
+  type CountryCode,
+} from '@/shared/infrastructure/country/country.constants';
+import { useCountryStore } from '@/shared/infrastructure/country/country.store';
 import { useLocationStore } from '@/shared/infrastructure/location/location.store';
 import { useCallback, useState } from 'react';
 
@@ -11,6 +16,7 @@ export interface RegisterFormValues {
   password: string;
   firstName: string;
   lastName: string;
+  country: CountryCode;
 }
 
 interface UseRegisterReturn {
@@ -35,6 +41,7 @@ function getRegisterErrorMessage(err: unknown): string {
 
 export function useRegister(): UseRegisterReturn {
   const coords = useLocationStore((s) => s.coords);
+  const setCountry = useCountryStore((s) => s.setCountry);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +58,12 @@ export function useRegister(): UseRegisterReturn {
       try {
         const credentials: RegisterCredentials = {
           ...values,
+          country: values.country ?? DEFAULT_COUNTRY_CODE,
           locationLatitude: coords?.latitude ?? 0,
           locationLongitude: coords?.longitude ?? 0,
         };
+
+        setCountry(credentials.country);
 
         await registerUseCase.execute(credentials);
 
@@ -66,7 +76,7 @@ export function useRegister(): UseRegisterReturn {
         setIsLoading(false);
       }
     },
-    [coords],
+    [coords, setCountry],
   );
 
   return {

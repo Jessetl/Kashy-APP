@@ -5,11 +5,15 @@ import { useCountryStore } from '@/shared/infrastructure/country/country.store';
 import { useLocationStore } from '@/shared/infrastructure/location/location.store';
 import { AppThemeProvider } from '@/shared/infrastructure/theme';
 import { usePushNotifications } from '@/shared/presentation/hooks/use-push-notifications';
+import * as WebBrowser from 'expo-web-browser';
 import { Stack } from 'expo-router';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
+
+// Necesario para que el flujo OAuth de expo-auth-session cierre el browser automáticamente
+WebBrowser.maybeCompleteAuthSession();
 
 function AuthModalGlobal() {
   const isVisible = useAuthStore((s) => s.isLoginModalVisible);

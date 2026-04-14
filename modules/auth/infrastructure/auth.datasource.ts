@@ -4,6 +4,7 @@ import type {
   AuthSession,
   AuthTokens,
   AuthUser,
+  GoogleAuthCredentials,
   LoginCredentials,
   RegisterCredentials,
 } from '../domain/auth.entity';
@@ -53,6 +54,15 @@ export class AuthDatasource implements AuthPort {
       body: credentials,
       skipAuth: true,
     });
+  }
+
+  async googleAuth(credentials: GoogleAuthCredentials): Promise<AuthSession> {
+    const response = await apiClient<AuthApiPayload>('/users/google-auth', {
+      method: 'POST',
+      body: credentials,
+      skipAuth: true,
+    });
+    return toAuthSession(response.data);
   }
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {

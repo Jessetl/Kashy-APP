@@ -58,6 +58,7 @@ export const AuthModal = React.memo(function AuthModal({
           <RegisterForm
             onSwitchToLogin={switchToLogin}
             onResetRef={handleResetRef}
+            onSuccess={onClose}
           />
         ) : (
           <LoginForm

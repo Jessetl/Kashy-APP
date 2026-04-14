@@ -2,23 +2,26 @@ import { AppPressable } from '@/shared/presentation/components/ui/app-pressable'
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback } from 'react';
-import { Platform, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text } from 'react-native';
 
 interface SocialButtonProps {
-  /** Nombre del provider (Google, Facebook, Apple) */
+  /** Nombre del provider (Google, Apple…) */
   provider: string;
   /** Icono o letra a mostrar */
   icon: string;
   /** Color del icono. Si no se pasa, usa textOnSurface */
   iconColor?: string;
+  /** Muestra un spinner y deshabilita el botón */
+  loading?: boolean;
   /** Callback al presionar */
-  onPress: (provider: string) => void;
+  onPress: () => void;
 }
 
 export const SocialButton = React.memo(function SocialButton({
   provider,
   icon,
   iconColor,
+  loading = false,
   onPress,
 }: SocialButtonProps) {
   const colors = useThemeColors();
@@ -27,23 +30,29 @@ export const SocialButton = React.memo(function SocialButton({
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    onPress(provider);
-  }, [provider, onPress]);
+    onPress();
+  }, [onPress]);
 
   return (
     <AppPressable
       onPress={handlePress}
+      disabled={loading}
       style={[
         styles.container,
         {
           backgroundColor: colors.backgroundTertiary,
           borderColor: colors.border,
+          opacity: loading ? 0.6 : 1,
         },
       ]}
     >
-      <Text style={[styles.icon, { color: iconColor ?? colors.textOnSurface }]}>
-        {icon}
-      </Text>
+      {loading ? (
+        <ActivityIndicator size='small' color={colors.textOnSurface} />
+      ) : (
+        <Text style={[styles.icon, { color: iconColor ?? colors.textOnSurface }]}>
+          {icon}
+        </Text>
+      )}
       <Text style={[styles.label, { color: colors.textOnSurface }]}>
         {provider}
       </Text>

@@ -3,6 +3,16 @@ export type {
   AuthTokens,
   AuthUser,
 } from '@/shared/domain/auth/auth.types';
+export type { CountryCode } from '@/shared/infrastructure/country/country.constants';
+
+/** Datos para autenticación con Google (register o login unificado) */
+export interface GoogleAuthCredentials {
+  idToken: string | null;
+  accessToken: string | null;
+  country: import('@/shared/infrastructure/country/country.constants').CountryCode;
+  locationLatitude: number;
+  locationLongitude: number;
+}
 
 /**
  * Tipo propio del módulo auth — solo usado por el flujo de login.
@@ -19,6 +29,7 @@ export interface RegisterCredentials {
   password: string;
   firstName: string;
   lastName: string;
+  country: CountryCode;
   locationLatitude: number;
   locationLongitude: number;
 }

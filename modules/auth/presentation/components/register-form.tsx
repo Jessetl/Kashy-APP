@@ -1,4 +1,10 @@
 import {
+  COUNTRIES,
+  DEFAULT_COUNTRY_CODE,
+  type CountryCode,
+} from '@/shared/infrastructure/country/country.constants';
+import { useCountryStore } from '@/shared/infrastructure/country/country.store';
+import {
   AppButton,
   AppTextInput,
   DividerWithText,
@@ -7,10 +13,18 @@ import {
 } from '@/shared/presentation/components/ui';
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
-import React, { useCallback } from 'react';
+import { ChevronDown } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 
+import { useGoogleAuth } from '../hooks/use-google-auth';
 import { useRegister, type RegisterFormValues } from '../hooks/use-register';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -19,13 +33,17 @@ const MIN_PASSWORD_LENGTH = 6;
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
   onResetRef: (reset: () => void) => void;
+  onSuccess?: () => void;
 }
 
 export const RegisterForm = React.memo(function RegisterForm({
   onSwitchToLogin,
   onResetRef,
+  onSuccess,
 }: RegisterFormProps) {
   const colors = useThemeColors();
+  const initialCountry = useCountryStore((s) => s.countryCode);
+  const [pickerVisible, setPickerVisible] = useState(false);
 
   const {
     control,
@@ -38,6 +56,7 @@ export const RegisterForm = React.memo(function RegisterForm({
       lastName: '',
       email: '',
       password: '',
+      country: initialCountry ?? DEFAULT_COUNTRY_CODE,
     },
     mode: 'onBlur',
     reValidateMode: 'onChange',
@@ -55,12 +74,19 @@ export const RegisterForm = React.memo(function RegisterForm({
     onResetRef(() => {
       reset();
       clearError();
+      clearGoogleError();
     });
-  }, [clearError, onResetRef, reset]);
+  }, [clearError, clearGoogleError, onResetRef, reset]);
 
-  const handleSocialLogin = useCallback((provider: string) => {
-    console.log(`[Auth] Registro con ${provider}`);
-  }, []);
+  // Obtener el país seleccionado en el formulario para pasarlo al hook de Google
+  const watchedCountry = useCountryStore((s) => s.countryCode);
+
+  const {
+    promptAsync: googlePrompt,
+    isLoading: googleLoading,
+    error: googleError,
+    clearError: clearGoogleError,
+  } = useGoogleAuth({ country: watchedCountry, onSuccess });
 
   return (
     <>
@@ -221,6 +247,141 @@ export const RegisterForm = React.memo(function RegisterForm({
           )}
         />
 
+        <Controller
+          control={control}
+          name='country'
+          rules={{ required: 'El país es requerido' }}
+          render={({ field: { onChange, value } }) => {
+            const selected =
+              COUNTRIES.find((c) => c.code === value) ?? COUNTRIES[0];
+            return (
+              <View style={styles.fieldWrapper}>
+                <Text
+                  style={[styles.countryLabel, { color: colors.textSecondary }]}
+                >
+                  País
+                </Text>
+                <AppPressable
+                  onPress={() => setPickerVisible(true)}
+                  style={[
+                    styles.countrySelector,
+                    {
+                      backgroundColor: colors.backgroundSecondary,
+                      borderColor: errors.country
+                        ? colors.danger
+                        : colors.borderLight,
+                    },
+                  ]}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.countryFlag}>{selected.flag}</Text>
+                  <Text
+                    style={[
+                      styles.countryName,
+                      { color: colors.textOnSurface },
+                    ]}
+                  >
+                    {selected.name}
+                  </Text>
+                  <ChevronDown
+                    size={16}
+                    color={colors.textSecondary}
+                    pointerEvents='none'
+                  />
+                </AppPressable>
+                {errors.country && (
+                  <Text style={[styles.fieldError, { color: colors.danger }]}>
+                    {errors.country.message}
+                  </Text>
+                )}
+
+                <Modal
+                  visible={pickerVisible}
+                  transparent
+                  animationType='fade'
+                  onRequestClose={() => setPickerVisible(false)}
+                >
+                  <TouchableWithoutFeedback
+                    onPress={() => setPickerVisible(false)}
+                  >
+                    <View style={styles.overlay}>
+                      <TouchableWithoutFeedback>
+                        <View
+                          style={[
+                            styles.sheet,
+                            { backgroundColor: colors.backgroundSecondary },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.sheetTitle,
+                              { color: colors.textOnSurface },
+                            ]}
+                          >
+                            Selecciona tu país
+                          </Text>
+                          <View
+                            style={[
+                              styles.sheetDivider,
+                              { backgroundColor: colors.borderLight },
+                            ]}
+                          />
+                          {COUNTRIES.map((c) => {
+                            const isSelected = c.code === value;
+                            return (
+                              <AppPressable
+                                key={c.code}
+                                onPress={() => {
+                                  onChange(c.code as CountryCode);
+                                  setPickerVisible(false);
+                                }}
+                                style={[
+                                  styles.countryRow,
+                                  isSelected && {
+                                    backgroundColor: colors.primaryLight,
+                                  },
+                                ]}
+                              >
+                                <Text style={styles.rowFlag}>{c.flag}</Text>
+                                <View style={styles.rowInfo}>
+                                  <Text
+                                    style={[
+                                      styles.rowName,
+                                      { color: colors.textOnSurface },
+                                    ]}
+                                  >
+                                    {c.name}
+                                  </Text>
+                                  <Text
+                                    style={[
+                                      styles.rowCurrency,
+                                      { color: colors.textSecondary },
+                                    ]}
+                                  >
+                                    {c.currency}
+                                  </Text>
+                                </View>
+                                {isSelected && (
+                                  <View
+                                    style={[
+                                      styles.checkDot,
+                                      { backgroundColor: colors.primary },
+                                    ]}
+                                  />
+                                )}
+                              </AppPressable>
+                            );
+                          })}
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </Modal>
+              </View>
+            );
+          }}
+        />
+
         <AppButton
           title='Crear Cuenta'
           onPress={() => {
@@ -233,14 +394,15 @@ export const RegisterForm = React.memo(function RegisterForm({
 
       <DividerWithText text='o continúa con' />
 
+      <ErrorBanner message={googleError} />
+
       {/* Social Login */}
       <View style={styles.socialRow}>
-        <SocialButton provider='Google' icon='G' onPress={handleSocialLogin} />
         <SocialButton
-          provider='Facebook'
-          icon='f'
-          iconColor='#1877F2'
-          onPress={handleSocialLogin}
+          provider='Google'
+          icon='G'
+          onPress={googlePrompt}
+          loading={googleLoading}
         />
       </View>
 
@@ -296,26 +458,83 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: 4,
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  locationText: {
-    flex: 1,
+  countryLabel: {
     fontSize: 13,
     fontWeight: '500',
+    marginBottom: 4,
+    marginLeft: 2,
   },
-  locationRetry: {
-    fontSize: 13,
+  countrySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  countryFlag: {
+    fontSize: 20,
+  },
+  countryName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  sheet: {
+    borderRadius: 16,
+    paddingVertical: 8,
+    overflow: 'hidden',
+  },
+  sheetTitle: {
+    fontSize: 15,
     fontWeight: '700',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sheetDivider: {
+    height: 1,
+    marginBottom: 4,
+  },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginHorizontal: 8,
+    marginBottom: 2,
+  },
+  rowFlag: {
+    fontSize: 22,
+  },
+  rowInfo: {
+    flex: 1,
+  },
+  rowName: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  rowCurrency: {
+    fontSize: 12,
+    fontWeight: '400',
+    marginTop: 1,
+  },
+  checkDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   socialRow: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
   },
   switchRow: {
     flexDirection: 'row',

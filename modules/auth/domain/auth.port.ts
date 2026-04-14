@@ -1,6 +1,7 @@
 import type {
   AuthSession,
   AuthTokens,
+  GoogleAuthCredentials,
   LoginCredentials,
   RegisterCredentials,
 } from './auth.entity';
@@ -9,5 +10,6 @@ import type {
 export interface AuthPort {
   login(credentials: LoginCredentials): Promise<AuthSession>;
   register(credentials: RegisterCredentials): Promise<void>;
+  googleAuth(credentials: GoogleAuthCredentials): Promise<AuthSession>;
   refreshToken(refreshToken: string): Promise<AuthTokens>;
 }

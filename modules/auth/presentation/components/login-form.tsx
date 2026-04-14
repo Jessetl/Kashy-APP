@@ -7,10 +7,11 @@ import {
 } from '@/shared/presentation/components/ui';
 import { AppPressable } from '@/shared/presentation/components/ui/app-pressable';
 import { useThemeColors } from '@/shared/presentation/hooks/use-app-theme';
-import React, { useCallback } from 'react';
+import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useGoogleAuth } from '../hooks/use-google-auth';
 import { useLogin } from '../hooks/use-login';
 
 interface LoginFormValues {
@@ -48,6 +49,13 @@ export const LoginForm = React.memo(function LoginForm({
 
   const { isLoading, error, submitLogin, clearError } = useLogin(onSuccess);
 
+  const {
+    promptAsync: googlePrompt,
+    isLoading: googleLoading,
+    error: googleError,
+    clearError: clearGoogleError,
+  } = useGoogleAuth({ onSuccess });
+
   const handleFormSubmit = handleSubmit(async (values) => {
     await submitLogin(values);
   });
@@ -57,12 +65,9 @@ export const LoginForm = React.memo(function LoginForm({
     onResetRef(() => {
       reset();
       clearError();
+      clearGoogleError();
     });
-  }, [clearError, onResetRef, reset]);
-
-  const handleSocialLogin = useCallback((provider: string) => {
-    console.log(`[Auth] Inicio de sesión con ${provider}`);
-  }, []);
+  }, [clearError, clearGoogleError, onResetRef, reset]);
 
   return (
     <>
@@ -155,14 +160,15 @@ export const LoginForm = React.memo(function LoginForm({
 
       <DividerWithText text='o continúa con' />
 
+      <ErrorBanner message={googleError} />
+
       {/* Social Login */}
       <View style={styles.socialRow}>
-        <SocialButton provider='Google' icon='G' onPress={handleSocialLogin} />
         <SocialButton
-          provider='Facebook'
-          icon='f'
-          iconColor='#1877F2'
-          onPress={handleSocialLogin}
+          provider='Google'
+          icon='G'
+          onPress={googlePrompt}
+          loading={googleLoading}
         />
       </View>
 
@@ -213,7 +219,7 @@ const styles = StyleSheet.create({
   },
   socialRow: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'center',
   },
   switchRow: {
     flexDirection: 'row',
