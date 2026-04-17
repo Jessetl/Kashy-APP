@@ -2,6 +2,7 @@ import { useExchangeRate } from '@/modules/shared-services/exchange-rate/present
 import { FadeHeaderScrollView } from '@/shared/presentation/components/fade-header-scroll-view';
 import { BottomSheetModal } from '@/shared/presentation/components/ui/bottom-sheet-modal';
 import { DialogModal } from '@/shared/presentation/components/ui/dialog-modal';
+import { ErrorBanner } from '@/shared/presentation/components/ui/error-banner';
 import { useAuth } from '@/shared/presentation/hooks/auth/use-auth';
 import { useAppTheme } from '@/shared/presentation/hooks/use-app-theme';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -59,6 +60,8 @@ export default function SupermarketScreen() {
   const deleteList = useShoppingListStore((s) => s.deleteList);
   const createList = useShoppingListStore((s) => s.createList);
   const loadLists = useShoppingListStore((s) => s.loadLists);
+  const error = useShoppingListStore((s) => s.error);
+  const clearError = useShoppingListStore((s) => s.clearError);
 
   const [category, setCategory] = useState<ProductCategory>('COMIDA');
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -68,10 +71,25 @@ export default function SupermarketScreen() {
   const [priceInLocal, setPriceInLocal] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && !activeList) {
-      void createList('Nueva lista');
-    }
-  }, [isAuthenticated, createList, activeList]);
+    if (activeList) return;
+    void (async () => {
+      await loadLists();
+      const state = useShoppingListStore.getState();
+      if (state.activeList) return;
+      if (state.lists.length > 0) {
+        state.setActiveList(state.lists[0]);
+      } else {
+        await createList('Nueva lista');
+      }
+    })();
+  }, [isAuthenticated, activeList, loadLists, createList]);
+
+  // Auto-dismiss transient error messages after a few seconds.
+  useEffect(() => {
+    if (!error) return;
+    const timeout = setTimeout(clearError, 4000);
+    return () => clearTimeout(timeout);
+  }, [error, clearError]);
 
   // Set exchange rate in the store so totals recalculate properly
   useEffect(() => {
@@ -378,6 +396,7 @@ export default function SupermarketScreen() {
             },
           ]}
         >
+          <ErrorBanner message={error} />
           {!editingItem && (
             <CategoryTabs selected={category} onSelect={setCategory} />
           )}

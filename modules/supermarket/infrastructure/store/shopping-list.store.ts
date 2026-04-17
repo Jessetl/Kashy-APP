@@ -195,7 +195,7 @@ const recalculateTotals = (
   return { totalLocal, totalUsd };
 };
 
-const defaultNewList: ShoppingList = {
+const createDefaultList = (): ShoppingList => ({
   id: generateId(),
   userId: null,
   name: 'Nueva Lista',
@@ -208,7 +208,7 @@ const defaultNewList: ShoppingList = {
   items: [],
   createdAt: new Date().toISOString(),
   completedAt: null,
-};
+});
 
 export const useShoppingListStore = create<ShoppingListState>()((set, get) => ({
   lists: [],
@@ -223,7 +223,11 @@ export const useShoppingListStore = create<ShoppingListState>()((set, get) => ({
   createList: async (name, storeName) => {
     // Always create locally — the list only goes to BD when the user
     // explicitly saves via Bookmark (saveList action).
-    const newList = { ...defaultNewList, name, storeName: storeName ?? null };
+    const newList: ShoppingList = {
+      ...createDefaultList(),
+      name,
+      storeName: storeName ?? null,
+    };
 
     set((state) => ({
       lists: [newList, ...state.lists],
@@ -304,6 +308,8 @@ export const useShoppingListStore = create<ShoppingListState>()((set, get) => ({
             ),
           };
         });
+
+        get().persistListsCache();
       } else {
         // Local list (guest or auth working list) — state only
         const newItem: ShoppingItem = {
@@ -891,7 +897,7 @@ export const useShoppingListStore = create<ShoppingListState>()((set, get) => ({
   resetStore: () => {
     set({
       lists: [],
-      activeList: { ...defaultNewList },
+      activeList: createDefaultList(),
       isLoading: false,
       error: null,
     });
